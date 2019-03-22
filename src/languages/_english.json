@@ -244,7 +244,7 @@
         "please_seed_phrase": "Please authenticate to view seed phrase"
       },
       "push_notifications": {
-        "please_enable_title": "Balance would like to send you push notifications",
+        "please_enable_title": "Rainbow would like to send you push notifications",
         "please_enable_body": "It looks like you are using WalletConnect. Please enable push notifications to be notified of transaction requests from WalletConnect."
       },
       "assets": {
@@ -254,13 +254,13 @@
         "create_wallet": "Create a Wallet",
         "instructions": "Please do not store more in your wallet than you are willing to lose.",
         "warning": "This is alpha software.",
-        "welcome": "Welcome to Balance"
+        "welcome": "Welcome to Rainbow"
       },
       "feedback": {
         "cancel": "No thanks",
         "choice": "Would you like to manually copy our feedback email address to your clipboard?",
         "copy_email_address": "Copy email address",
-        "email_subject": "📱 Balance Wallet Alpha Feedback",
+        "email_subject": "📱 Rainbow Beta Feedback",
         "error": "Error launching email client",
         "send": "Send Feedback"
       },
