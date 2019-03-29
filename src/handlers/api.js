@@ -58,11 +58,11 @@ export const apiGetHistoricalPrices = (
 };
 
 /**
- * Configuration for balance api
+ * Configuration for Dapple api
  * @type axios instance
  */
 const api = axios.create({
-  baseURL: 'https://indexer.balance.io',
+  baseURL: 'https://dapple.rainbow.me',
   timeout: 30000, // 30 secs
   headers: {
     'Content-Type': 'application/json',
