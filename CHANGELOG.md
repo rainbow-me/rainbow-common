@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/)
 
 ### Removed
 
+## [0.6.37](https://github.com/balance-io/balance-common/releases/tag/0.6.37)
+### Changed
+* Updated Dapple endpoint
+
 ## [0.6.35](https://github.com/balance-io/balance-common/releases/tag/0.6.35)
 ### Added
 * English tags for default transaction data
