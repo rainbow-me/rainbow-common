@@ -199,7 +199,7 @@ export const sendTransaction = (transactionDetails, signAndSendTransactionCb) =>
     gasLimit,
   } = transactionDetails;
   const { accountType } = getState().settings;
-  const { selected, trackingAmount } = getState().send;
+  const { selected } = getState().send;
   const txDetails = {
     asset: asset,
     from: address,
@@ -211,16 +211,8 @@ export const sendTransaction = (transactionDetails, signAndSendTransactionCb) =>
   };
   return createSignableTransaction(txDetails)
     .then(signableTransactionDetails => {
-      const symbol = get(selected, 'symbol', 'unknown');
-      const address = get(selected, 'address', '');
-      const trackingName = `${symbol}:${address}`;
       signAndSendTransactionCb({
         accountType,
-        tracking: {
-          action: 'send',
-          amount: parseFloat(trackingAmount),
-          name: trackingName,
-        },
         transaction: signableTransactionDetails,
       })
       .then((txHash) => {

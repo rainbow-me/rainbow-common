@@ -6,11 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/)
 
 ## [Unreleased]
-### Added
-
-### Changed
-
 ### Removed
+* Removed Matomo
 
 ## [0.6.37](https://github.com/rainbow-me/rainbow-common/releases/tag/0.6.37)
 ### Changed
