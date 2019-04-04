@@ -84,7 +84,7 @@ export const apiGetAccountBalances = async (
     const { data } = await api.get(`/get_balances/${network}/${address}`);
     return parseAccountAssets(data, address);
   } catch (error) {
-    console.log('Error getting acct balances from proxy', error);
+    console.log('Error getting acct balances from dapple', error);
     throw error;
   }
 };
