@@ -503,6 +503,7 @@ export const parseTransaction = (assets, tx, address) => {
     ms: `${tx.timeStamp}000`,
   };
   const error = !!tx.error;
+  const nonce = tx.nonce;
   let from = tx.from;
   let to = tx.to;
   let asset = {
@@ -528,16 +529,17 @@ export const parseTransaction = (assets, tx, address) => {
   };
 
   let result = {
-    hash,
-    timestamp,
-    from,
-    to,
-    error,
-    value,
-    txFee,
-    native: {},
-    pending: false,
     asset,
+    error,
+    from,
+    hash,
+    native: {},
+    nonce,
+    pending: false,
+    timestamp,
+    to,
+    txFee,
+    value,
   };
   let results = [result];
 
@@ -548,16 +550,17 @@ export const parseTransaction = (assets, tx, address) => {
     if (tx.operations.length) {
       tx.operations.forEach(transferData => {
         const transferTx = {
-          hash: transferData.transactionId,
-          timestamp,
-          from,
-          to,
-          error,
-          value,
-          txFee,
-          native: {},
-          pending: false,
           asset,
+          error,
+          from,
+          hash: transferData.transactionId,
+          native: {},
+          nonce,
+          pending: false,
+          timestamp,
+          to,
+          txFee,
+          value,
         };
         const contractEnabled = get(transferData, 'contract.enabled', true);
         const contractName = get(transferData, 'contract.name', null);
@@ -604,19 +607,20 @@ export const parseTransaction = (assets, tx, address) => {
           parsedAsset.decimals,
         );
         const transferTx = {
-          hash: result.hash,
-          timestamp,
-          from,
-          to: toAddress,
+          asset: parsedAsset,
           error,
+          from,
+          hash: result.hash,
+          native: {},
+          nonce,
+          pending: false,
+          timestamp,
+          to: toAddress,
+          txFee,
           value: {
             amount,
             display: convertAmountToDisplay(amount, parsedAsset),
           },
-          txFee,
-          native: {},
-          pending: false,
-          asset: parsedAsset,
         };
         results = [transferTx];
       }
