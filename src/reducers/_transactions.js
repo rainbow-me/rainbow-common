@@ -152,7 +152,7 @@ const getPages = ({
       let updatedPendingTransactions = pendingTransactions;
       if (pendingTransactions.length) {
         updatedPendingTransactions = _.filter(pendingTransactions, (pendingTxn) => {
-          const matchingElement = _.find(transactionsForPage, (txn) => txn.hash && txn.hash.startsWith(pendingTxn.hash));
+          const matchingElement = _.find(transactionsForPage, (txn) => txn.hash && txn.hash.startsWith(pendingTxn.hash) || (txn.nonce && (txn.nonce === pendingTxn.nonce)));
           return !matchingElement;
         });
       }
