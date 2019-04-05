@@ -158,8 +158,9 @@ const getPages = ({
           if (updatedPendingTransactions.length) {
             updatedPendingTransactions = _.filter(updatedPendingTransactions, (pendingTxn) => {
               const matchingElement = _.find(transactionsForPage, (txn) => txn.hash
-                && txn.hash.startsWith(pendingTxn.hash)
-                || (txn.nonce && (txn.nonce >= pendingTxn.nonce)));
+                && txn.from.toLowerCase() === accountAddress.toLowerCase()
+                && (txn.hash.startsWith(pendingTxn.hash)
+                  || (txn.nonce && (txn.nonce >= pendingTxn.nonce))));
               return !matchingElement;
             });
           }
