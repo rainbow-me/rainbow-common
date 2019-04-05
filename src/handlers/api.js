@@ -3,7 +3,6 @@ import { findIndex, slice } from 'lodash';
 import {
   parseAccountAssets,
   parseAccountTransactions,
-  parseHistoricalTransactions,
 } from './parsers';
 import { formatInputDecimals } from '../helpers/bignumber';
 import nativeCurrencies from '../references/native-currencies.json';
@@ -125,8 +124,7 @@ export const apiGetAccountTransactions = async (
         pages = page;
       }
     }
-    transactions = await parseHistoricalTransactions(transactions, page);
-    const result = { data: transactions, pages };
+    const result = { data: transactions };
     return result;
   } catch (error) {
     console.log('Error getting acct transactions', error);
