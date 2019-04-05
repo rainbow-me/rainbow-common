@@ -3,7 +3,6 @@ import { findIndex, slice } from 'lodash';
 import {
   parseAccountAssets,
   parseAccountTransactions,
-  parseHistoricalTransactions,
 } from './parsers';
 import { formatInputDecimals } from '../helpers/bignumber';
 import nativeCurrencies from '../references/native-currencies.json';

@@ -3,6 +3,7 @@ import lang from '../languages';
 import { apiGetAccountTransactions } from '../handlers/api';
 import {
   parseError,
+  parseHistoricalTransactions,
   parseNewTransaction,
 } from '../handlers/parsers';
 import {
