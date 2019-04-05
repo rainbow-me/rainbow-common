@@ -125,8 +125,7 @@ export const apiGetAccountTransactions = async (
         pages = page;
       }
     }
-    transactions = await parseHistoricalTransactions(transactions, page);
-    const result = { data: transactions, pages };
+    const result = { data: transactions };
     return result;
   } catch (error) {
     console.log('Error getting acct transactions', error);
