@@ -115,6 +115,7 @@ const assetsUpdateBalances = () => (dispatch, getState) => new Promise((resolve,
   const getBalances = () => new Promise((resolve, reject) => {
     apiGetAccountBalances(accountAddress, network)
       .then(assets => {
+        // TODO filter out UNI V1 tokens
         saveAssets(accountAddress, assets, network);
         dispatch({
           type: ASSETS_UPDATE_BALANCES_SUCCESS,
