@@ -80,7 +80,6 @@ export const sendModalInit = (options = {}) => (dispatch, getState) => {
   const { prices } = getState().prices;
   const { gasLimit } = getState().send;
 
-  // TODO what if prices failed to be updated
   const fallbackGasPrices = parseGasPrices(null, prices, gasLimit, nativeCurrency, options.gasFormat === 'short');
   const selected = assets.filter(asset => asset.symbol === options.defaultAsset)[0] || {};
 
@@ -127,8 +126,7 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
   let gasPrices = getState().send.gasPrices;
   if (!Object.keys(gasPrices).length) return null;
   const _gasPriceOption = newGasPriceOption || gasPriceOption;
-  // TODO gasPriceOption below may need to be _gasPriceOption
-  let _gasPrice = gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
+  let _gasPrice = _gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
   dispatch({ type: SEND_UPDATE_GAS_PRICE_REQUEST });
   estimateGasLimit({
     asset: selected,
@@ -141,13 +139,11 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
       const { assets } = getState().assets;
       const { nativeCurrency } = getState().settings;
       gasPrices = parseGasPricesTxFee(gasPrices, prices, gasLimit, nativeCurrency);
-      // TODO
       _gasPrice = gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
 
       const ethereum = assets.filter(asset => asset.symbol === 'ETH');
 
       const balanceAmount = get(ethereum, '[0].balance.amount', 0);
-      // TODO _gasPrice above may be incorrect
       const txFeeAmount = _gasPrice.txFee.value.amount;
 
       dispatch({
