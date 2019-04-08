@@ -126,7 +126,7 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
   let gasPrices = getState().send.gasPrices;
   if (!Object.keys(gasPrices).length) return null;
   const _gasPriceOption = newGasPriceOption || gasPriceOption;
-  const _gasPrice = gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
+  let _gasPrice = _gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
   dispatch({ type: SEND_UPDATE_GAS_PRICE_REQUEST });
   estimateGasLimit({
     asset: selected,
@@ -139,6 +139,7 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
       const { assets } = getState().assets;
       const { nativeCurrency } = getState().settings;
       gasPrices = parseGasPricesTxFee(gasPrices, prices, gasLimit, nativeCurrency);
+      _gasPrice = gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
 
       const ethereum = assets.filter(asset => asset.symbol === 'ETH');
 
@@ -370,20 +371,22 @@ export const sendClearFields = () => ({ type: SEND_CLEAR_FIELDS });
 
 // -- Reducer --------------------------------------------------------------- //
 const INITIAL_STATE = {
+  address: '',
+  assetAmount: '',
+  confirm: false,
+  fetching: false,
   fetchingGasPrices: false,
+  gasLimit: ethUnits.basic_tx,
   gasPrice: {},
   gasPrices: {},
-  gasLimit: ethUnits.basic_tx,
   gasPriceOption: 'average',
-  fetching: false,
-  address: '',
-  recipient: '',
+  isSufficientBalance: false,
+  isSufficientGas: false,
   nativeAmount: '',
-  trackingAmount: '',
-  assetAmount: '',
-  txHash: '',
-  confirm: false,
+  recipient: '',
   selected: {},
+  trackingAmount: '',
+  txHash: '',
 };
 
 export default (state = INITIAL_STATE, action) => {

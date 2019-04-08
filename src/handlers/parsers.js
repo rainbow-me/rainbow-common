@@ -141,10 +141,11 @@ export const parseGasPrices = (data, prices, gasLimit, nativeCurrency, short) =>
 
 export const convertGasPricesToNative = (prices, gasPrices, nativeCurrency) => {
   const nativeGases = { ...gasPrices };
+  // TODO if prices is empty, still runs thru the logic below and just sets it to 0
   if (prices) {
-    gasPrices.fast.txFee.native = getNativeGasPrice(prices, gasPrices.fast.txFee.value.amount, nativeCurrency);
-    gasPrices.average.txFee.native = getNativeGasPrice(prices, gasPrices.average.txFee.value.amount, nativeCurrency);
-    gasPrices.slow.txFee.native = getNativeGasPrice(prices, gasPrices.slow.txFee.value.amount, nativeCurrency);
+    nativeGases.fast.txFee.native = getNativeGasPrice(prices, gasPrices.fast.txFee.value.amount, nativeCurrency);
+    nativeGases.average.txFee.native = getNativeGasPrice(prices, gasPrices.average.txFee.value.amount, nativeCurrency);
+    nativeGases.slow.txFee.native = getNativeGasPrice(prices, gasPrices.slow.txFee.value.amount, nativeCurrency);
   }
   return nativeGases;
 };
