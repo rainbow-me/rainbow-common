@@ -256,7 +256,6 @@ export const estimateGasLimit = async ({
     gasLimit = await web3Instance.eth.estimateGas(estimateGasData);
   } else {
     let value = convertAssetAmountFromBigNumber(_amount, asset.decimals);
-    value = convertStringToHex(value);
     estimateGasData = { from: address, to: recipient, data, value };
     gasLimit = await web3Instance.eth.estimateGas(estimateGasData);
   }
