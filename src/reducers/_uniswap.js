@@ -57,9 +57,7 @@ const uniswapUpdateState = () => (dispatch, getState) => new Promise((resolve, r
   const { accountAddress, network } = getState().settings;
   const { assets } = getState().assets;
   const liquidityTokens = filter(assets, (asset) => asset.symbol === 'UNI-V1');
-  console.log('LiquidityTokens', liquidityTokens);
-  const exchangeContracts = map(liquidityTokens, (x) => x.address);
-  console.log('exchange contracts', exchangeContracts);
+  const exchangeContracts = map(liquidityTokens, x => x.address);
   dispatch({ type: UNISWAP_UPDATE_REQUEST });
   getUniswapLiquidityInfo(accountAddress, exchangeContracts)
     .then(uniswap => {
