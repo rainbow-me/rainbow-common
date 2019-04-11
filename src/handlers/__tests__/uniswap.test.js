@@ -2,7 +2,7 @@ import '@babel/polyfill';
 import { getUniswapLiquidityInfo } from '../uniswap'
 
 const checkExchangeResult = (exchangeResult) => {
-  expect(exchangeResult).toHaveProperty('liquidityPoolPercentage');
+  expect(exchangeResult).toHaveProperty('totalSupply');
   expect(exchangeResult).toHaveProperty('tokenAddress');
   expect(exchangeResult).toHaveProperty('balance');
   expect(exchangeResult).toHaveProperty('ethBalance');

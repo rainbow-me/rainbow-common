@@ -5,11 +5,6 @@ import settings from './_settings';
 import transactions from './_transactions';
 import uniswap from './_uniswap';
 import {
-  uniswapClearState,
-  uniswapLoadState,
-  uniswapRefreshState,
-} from './_assets';
-import {
   accountClearState,
   accountLoadState,
   assetsRefreshState,
@@ -66,7 +61,4 @@ export {
   transactionsUpdateHasPendingTransaction,
   transactionsAddNewTransaction,
   uniswap,
-  uniswapClearState,
-  uniswapLoadState,
-  uniswapRefreshState,
 };

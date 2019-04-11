@@ -1,5 +1,4 @@
 import {
-  convertAmountToDisplay,
   divide,
   fromWei,
   multiply,
@@ -38,8 +37,7 @@ export const getUniswapLiquidityInfo = async (accountAddress, exchangeContracts)
       const decimals = tokenInfo[1];
 
       const ethBalance = fromWei(divide(multiply(ethReserve, balance), totalSupply));
-      const tokenBalance = convertAmountToDisplay(divide(multiply(reserve, balance), totalSupply), { decimals }, 3);
-      const liquidityPoolPercentage = multiply(divide(balance, totalSupply), 100);
+      const tokenBalance = fromWei(divide(multiply(reserve, balance), totalSupply), decimals);
       return {
         tokenAddress,
         balance,
@@ -49,7 +47,7 @@ export const getUniswapLiquidityInfo = async (accountAddress, exchangeContracts)
           decimals,
           symbol,
         },
-        liquidityPoolPercentage,
+        totalSupply,
       };
     } catch (error) {
       console.log('error getting uniswap info', error);

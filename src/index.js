@@ -36,9 +36,6 @@ import {
   transactionsUpdateHasPendingTransaction,
   transactionsAddNewTransaction,
   uniswap,
-  uniswapClearState,
-  uniswapLoadState,
-  uniswapRefreshState,
 } from './reducers';
 import {
   isValidAddress,
@@ -175,9 +172,6 @@ export {
   transactionsRefreshState,
   transactionsUpdateHasPendingTransaction,
   uniswap,
-  uniswapClearState,
-  uniswapLoadState,
-  uniswapRefreshState,
   web3Instance,
   web3Provider,
   withAccountAssets,
