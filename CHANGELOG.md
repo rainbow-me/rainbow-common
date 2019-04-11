@@ -9,8 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/)
 ### Added
 
 ### Changed
+* Fix incorrect gas limit estimation for ETH sent to smart contracts
 * Remove transactions from pending list that have been dropped or replaced
 * Parsing historical transactions and prices in chunks
+* Cleared out check for sufficient gas and balance when clearing send fields
 
 ### Removed
 
