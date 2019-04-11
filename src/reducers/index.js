@@ -3,6 +3,12 @@ import prices from './_prices';
 import send from './_send';
 import settings from './_settings';
 import transactions from './_transactions';
+import uniswap from './_uniswap';
+import {
+  uniswapClearState,
+  uniswapLoadState,
+  uniswapRefreshState,
+} from './_assets';
 import {
   accountClearState,
   accountLoadState,
@@ -59,4 +65,8 @@ export {
   transactionsRefreshState,
   transactionsUpdateHasPendingTransaction,
   transactionsAddNewTransaction,
+  uniswap,
+  uniswapClearState,
+  uniswapLoadState,
+  uniswapRefreshState,
 };
