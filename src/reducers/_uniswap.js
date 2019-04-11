@@ -26,7 +26,7 @@ const UNISWAP_UPDATE_FAILURE =
 const UNISWAP_CLEAR_STATE = 'uniswap/UNISWAP_CLEAR_STATE';
 
 // -- Actions --------------------------------------------------------------- //
-const uniswapLoadState = () => (dispatch, getState) => {
+export const uniswapLoadState = () => (dispatch, getState) => {
   const { accountAddress, network } = getState().settings;
   dispatch({ type: UNISWAP_LOAD_REQUEST });
   getUniswap(accountAddress, network)
@@ -42,18 +42,13 @@ const uniswapLoadState = () => (dispatch, getState) => {
     });
 };
 
-const uniswapClearState = () => (dispatch, getState) => {
+export const uniswapClearState = () => (dispatch, getState) => {
   const { accountAddress, network } = getState().settings;
   removeUniswap(accountAddress, network);
   dispatch({ type: UNISWAP_CLEAR_STATE });
 };
 
-export const uniswapRefreshState = () => dispatch => {
-  const getUniswap = dispatch(uniswapUpdateState());
-  return Promise.all([getUniswap]);
-};
-
-const uniswapUpdateState = () => (dispatch, getState) => new Promise((resolve, reject) => {
+export const uniswapUpdateState = () => (dispatch, getState) => new Promise((resolve, reject) => {
   const { accountAddress, network } = getState().settings;
   const { assets } = getState().assets;
   const liquidityTokens = filter(assets, (asset) => asset.symbol === 'UNI-V1');
