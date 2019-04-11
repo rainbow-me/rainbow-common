@@ -12,6 +12,7 @@ import {
   removeWalletConnect,
 } from '../handlers/commonStorage';
 import { transactionsClearState, transactionsLoadState } from './_transactions';
+import { uniswapClearState, uniswapLoadState, uniswapUpdateState } from './_uniswap';
 import {
   getNativePrices,
   pricesClearState,
@@ -57,6 +58,7 @@ export const accountClearState = () => dispatch => {
   dispatch(pricesClearState());
   dispatch(assetsClearState());
   dispatch(transactionsClearState());
+  dispatch(uniswapClearState());
   removeWalletConnect();
 };
 
@@ -64,6 +66,7 @@ export const accountLoadState = () => dispatch => {
   dispatch(assetsLoadState());
   dispatch(pricesLoadState());
   dispatch(transactionsLoadState());
+  dispatch(uniswapLoadState());
 };
 
 const assetsLoadState = () => (dispatch, getState) => {
@@ -118,6 +121,7 @@ const assetsUpdateBalances = () => (dispatch, getState) => new Promise((resolve,
           type: ASSETS_UPDATE_BALANCES_SUCCESS,
           payload: assets,
         });
+        dispatch(uniswapUpdateState());
         dispatch(getNativePrices()).then(() => {
           resolve(true);
         }).catch(error => {
