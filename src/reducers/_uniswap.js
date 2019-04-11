@@ -1,4 +1,4 @@
-import { filter } from 'lodash';
+import { filter, map } from 'lodash';
 import { getUniswapLiquidityInfo } from '../handlers/uniswap';
 import { parseError } from '../handlers/parsers';
 import {
@@ -60,11 +60,6 @@ export const uniswapUpdateState = () => (dispatch, getState) => new Promise((res
       dispatch({
         type: UNISWAP_UPDATE_SUCCESS,
         payload: uniswap,
-      });
-      dispatch(getNativePrices()).then(() => {
-        resolve(true);
-      }).catch(error => {
-        reject(error);
       });
     })
     .catch(error => {
