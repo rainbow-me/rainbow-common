@@ -52,6 +52,7 @@ const ASSETS_CLEAR_STATE = 'assets/ASSETS_CLEAR_STATE';
 
 // -- Actions --------------------------------------------------------------- //
 let getBalancesInterval = null;
+let getUniqueTokensInterval = null;
 
 export const accountClearState = () => dispatch => {
   dispatch(pricesClearState());
@@ -98,6 +99,7 @@ const assetsClearState = () => (dispatch, getState) => {
   removeAssets(accountAddress, network);
   removeUniqueTokens(accountAddress, network);
   clearInterval(getBalancesInterval);
+  clearInterval(getUniqueTokensInterval);
   dispatch({ type: ASSETS_CLEAR_STATE });
 };
 
@@ -145,20 +147,30 @@ const assetsUpdateBalances = () => (dispatch, getState) => new Promise((resolve,
 const assetsGetUniqueTokens = () => (dispatch, getState) => new Promise((resolve, reject) => {
   dispatch({ type: ASSETS_GET_UNIQUE_TOKENS_REQUEST });
   const { accountAddress, network } = getState().settings;
-  apiGetAccountUniqueTokens(accountAddress)
-    .then(uniqueTokens => {
-      saveUniqueTokens(accountAddress, uniqueTokens, network);
-      dispatch({
-        type: ASSETS_GET_UNIQUE_TOKENS_SUCCESS,
-        payload: uniqueTokens,
+  const fetchUniqueTokens = () => new Promise((resolve, reject) => {
+    apiGetAccountUniqueTokens(accountAddress)
+      .then(uniqueTokens => {
+        saveUniqueTokens(accountAddress, uniqueTokens, network);
+        dispatch({
+          type: ASSETS_GET_UNIQUE_TOKENS_SUCCESS,
+          payload: uniqueTokens,
+        });
+        resolve(true);
+      }).catch(error => {
+        const message = parseError(error);
+        dispatch(notificationShow(message, true));
+        dispatch({ type: ASSETS_GET_UNIQUE_TOKENS_FAILURE });
+        reject(error);
       });
-      resolve(true);
-    })
-    .catch(error => {
-      const message = parseError(error);
-      dispatch(notificationShow(message, true));
-      dispatch({ type: ASSETS_GET_UNIQUE_TOKENS_FAILURE });
-      reject(error);
+  });
+  fetchUniqueTokens().then(() => {
+    clearInterval(getUniqueTokensInterval);
+    getUniqueTokensInterval = setInterval(fetchUniqueTokens, 15000); // 15 secs
+    resolve(true);
+  }).catch(error => {
+    clearInterval(getUniqueTokensInterval);
+    getUniqueTokensInterval = setInterval(fetchUniqueTokens, 15000); // 15 secs
+    reject(error);
   });
 });
 
