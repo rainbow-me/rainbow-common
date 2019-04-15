@@ -19,7 +19,7 @@ import ethUnits from '../references/ethereum-units.json';
 import nativeCurrencies from '../references/native-currencies.json';
 import timeUnits from '../references/time-units.json';
 import { debounceRequest } from '../helpers/utilities';
-import { getTransactionCount } from './web3';
+import { getTransactionCount } from './web3_ethers';
 import { getTimeString } from '../helpers/time';
 import { apiGetHistoricalPrices } from './api';
 

@@ -1,4 +1,6 @@
-import Web3 from 'web3';
+import { ethers } from 'ethers';
+import { replace } from 'lodash';
+import { REACT_APP_INFURA_PROJECT_ID } from 'react-native-dotenv';
 import { isValidAddress } from '../helpers/validators';
 import { getDataString, removeHexPrefix } from '../helpers/utilities';
 import {
@@ -13,50 +15,50 @@ import {
 import ethUnits from '../references/ethereum-units.json';
 import smartContractMethods from '../references/smartcontract-methods.json';
 
+const infura_url = `https://network.infura.io/v3/${REACT_APP_INFURA_PROJECT_ID}`;
+
 /**
  * @desc web3 http instance
  */
-export const web3Instance = new Web3(
-  new Web3.providers.HttpProvider(`https://mainnet.infura.io/`),
-);
+export let web3Provider = new ethers.providers.JsonRpcProvider(replace(infura_url, 'network', 'mainnet'));
 
 /**
  * @desc set a different web3 provider
- * @param {String}
+ * @param {String} network
  */
-export const web3SetHttpProvider = provider => {
-  let providerObj = null;
-  if (provider.match(/(https?:\/\/)(\w+.)+/g)) {
-    providerObj = new Web3.providers.HttpProvider(provider);
-  }
-  if (!providerObj) {
-    throw new Error(
-      'function web3SetHttpProvider requires provider to match a valid HTTP/HTTPS endpoint',
-    );
-  }
-  return web3Instance.setProvider(providerObj);
+export const web3SetHttpProvider = network => {
+  // TODO check network is valid network
+  web3Provider = new ethers.providers.JsonRpcProvider(replace(infura_url, 'network', network));
 };
 
 /**
  * @desc convert to checksum address
  * @param  {String} address
- * @return {String}
+ * @return {String} checksum address
  */
-export const toChecksumAddress = address => {
-  if (typeof address === 'undefined') return '';
-
-  address = address.toLowerCase().replace('0x', '');
-  const addressHash = web3Instance.utils.sha3(address).replace('0x', '');
-  let checksumAddress = '0x';
-
-  for (let i = 0; i < address.length; i++) {
-    if (parseInt(addressHash[i], 16) > 7) {
-      checksumAddress += address[i].toUpperCase();
-    } else {
-      checksumAddress += address[i];
-    }
+export const toChecksumAddress = async (address) => {
+  try {
+    return await ethers.utils.getAddress(address);
+  } catch (error) {
+    return null;
   }
-  return checksumAddress;
+};
+
+export const toHex = value => ethers.utils.hexlify(value);
+
+/**
+ * @desc estimate gas limit
+ * @param  {String} address
+ * @return {String} checksum address
+ */
+export const estimateGas = async (estimateGasData) => { 
+  const gasLimit = await web3Provider.estimateGas(estimateGasData);
+  return gasLimit.toNumber();
+};
+
+export const getGasPrice = async () => { 
+  const gasPrice = await web3Provider.getGasPrice();
+  return gasPrice.toNumber();
 };
 
 /**
@@ -64,21 +66,14 @@ export const toChecksumAddress = address => {
  * @param  {Number} wei
  * @return {BigNumber}
  */
-export const fromWei = wei => web3Instance.utils.fromWei(wei);
+export const fromWei = wei => ethers.utils.formatEther(wei);
 
 /**
  * @desc convert from ether to wei
  * @param  {Number} ether
  * @return {BigNumber}
  */
-export const toWei = ether => web3Instance.utils.toWei(ether);
-
-/**
- * @desc hash string with sha3
- * @param  {String} string
- * @return {String}
- */
-export const sha3 = string => web3Instance.utils.sha3(string);
+export const toWei = ether => ethers.utils.parseEther(ether);
 
 /**
  * @desc get address transaction count
@@ -86,57 +81,7 @@ export const sha3 = string => web3Instance.utils.sha3(string);
  * @return {Promise}
  */
 export const getTransactionCount = address =>
-  web3Instance.eth.getTransactionCount(address, 'pending');
-
-/**
- * @desc get transaction by hash
- * @param   {String}  hash
- * @return  {Promise}
- */
-export const getTransactionByHash = hash =>
-  web3Instance.eth.getTransaction(hash);
-
-/**
- * @desc get block by hash
- * @param   {String}  hash
- * @return  {Promise}
- */
-export const getBlockByHash = hash => web3Instance.eth.getBlock(hash);
-
-/**
- * @desc get account ether balance
- * @param  {String} accountAddress
- * @param  {String} tokenAddress
- * @return {Array}
- */
-export const getAccountBalance = async address => {
-  const wei = await web3Instance.eth.getBalance(address);
-  const ether = fromWei(wei);
-  const balance =
-    convertStringToNumber(ether) !== 0 ? convertNumberToString(ether) : 0;
-  return balance;
-};
-
-/**
- * @desc get account token balance
- * @param  {String} accountAddress
- * @param  {String} tokenAddress
- * @return {Array}
- */
-export const getTokenBalanceOf = (accountAddress, tokenAddress) =>
-  new Promise((resolve, reject) => {
-    const balanceMethodHash = smartContractMethods.token_balance.hash;
-    const dataString = getDataString(balanceMethodHash, [
-      removeHexPrefix(accountAddress),
-    ]);
-    web3Instance.eth
-      .call({ to: tokenAddress, data: dataString })
-      .then(balanceHexResult => {
-        const balance = convertHexToString(balanceHexResult);
-        resolve(balance);
-      })
-      .catch(error => reject(error));
-  });
+  web3Provider.getTransactionCount(address, 'pending');
 
 /**
  * @desc get transaction details
@@ -151,20 +96,20 @@ export const getTxDetails = async ({
   gasPrice,
   gasLimit,
 }) => {
-  const _gasPrice = gasPrice || (await web3Instance.eth.getGasPrice());
+  const _gasPrice = gasPrice || (await getGasPrice());
   const estimateGasData = value === '0x00' ? { from, to, data } : { to, data };
   const _gasLimit =
-    gasLimit || (await web3Instance.eth.estimateGas(estimateGasData));
+    gasLimit || (await estimateGas(estimateGasData));
   const nonce = await getTransactionCount(from);
   const tx = {
     data,
     from,
-    gas: web3Instance.utils.toHex(_gasLimit),
-    gasLimit: web3Instance.utils.toHex(_gasLimit),
-    gasPrice: web3Instance.utils.toHex(_gasPrice),
-    nonce: web3Instance.utils.toHex(nonce),
+    gas: toHex(_gasLimit),
+    gasLimit: toHex(_gasLimit),
+    gasPrice: toHex(_gasPrice),
+    nonce: toHex(nonce),
     to,
-    value: web3Instance.utils.toHex(value),
+    value: toHex(value),
   };
   return tx;
 };
@@ -240,7 +185,7 @@ export const estimateGasLimit = async ({
       ? convertAmountToBigNumber(amount)
       : asset.balance.amount * 0.1;
   let _recipient =
-    recipient && isValidAddress(recipient)
+    recipient && await isValidAddress(recipient)
       ? recipient
       : '0x737e583620f4ac1842d4e354789ca0c5e0651fbb';
   let estimateGasData = { to: _recipient, data };
@@ -253,11 +198,11 @@ export const estimateGasLimit = async ({
       value,
     ]);
     estimateGasData = { from: address, to: asset.address, data, value: '0x0' };
-    gasLimit = await web3Instance.eth.estimateGas(estimateGasData);
+    gasLimit = await estimateGas(estimateGasData);
   } else {
     let value = convertAssetAmountFromBigNumber(_amount, asset.decimals);
     estimateGasData = { from: address, to: recipient, data, value };
-    gasLimit = await web3Instance.eth.estimateGas(estimateGasData);
+    gasLimit = await estimateGas(estimateGasData);
   }
   return gasLimit;
 };
