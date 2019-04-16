@@ -186,10 +186,12 @@ export const estimateGasLimit = async ({
 }) => {
   let gasLimit = ethUnits.basic_tx;
   let data = '0x';
+  console.log('original amount', amount);
   let _amount =
     amount && Number(amount)
       ? convertAmountToBigNumber(amount)
       : asset.balance.amount * 0.1;
+  console.log('selected amount', _amount);
   let _recipient = recipient;
   if (endsWith(recipient, '.eth')) {
     _recipient = await web3Provider.resolveName(recipient);
@@ -201,9 +203,7 @@ export const estimateGasLimit = async ({
   let estimateGasData = { to: _recipient, data };
   if (asset.symbol !== 'ETH') {
     const transferMethodHash = smartContractMethods.token_transfer.hash;
-    console.log('asset', asset);
     let value = convertAssetAmountFromBigNumber(_amount, asset.decimals);
-    console.log('_amount', _amount);
     console.log('value', value);
     value = convertStringToHex(value);
     console.log('value', value);
