@@ -113,8 +113,6 @@ export const getTxDetails = async (transaction) => {
   const nonce = await getTransactionCount(from);
   const tx = {
     data,
-    from,
-    gas: toHex(_gasLimit),
     gasLimit: toHex(_gasLimit),
     gasPrice: toHex(_gasPrice),
     nonce: toHex(nonce),
