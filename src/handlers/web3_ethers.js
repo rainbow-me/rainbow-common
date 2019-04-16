@@ -93,18 +93,23 @@ export const getTransactionCount = address =>
  * @param  {Object} transaction { from, to, data, value, gasPrice, gasLimit }
  * @return {Object}
  */
-export const getTxDetails = async ({
-  from,
-  to,
-  data,
-  value,
-  gasPrice,
-  gasLimit,
-}) => {
-  const _gasPrice = gasPrice || (await getGasPrice());
+export const getTxDetails = async (transaction) => {
+  const from =
+    startsWith(transaction.from, '0x')
+      ? transaction.from
+      : `0x${transaction.from}`;
+  const to =
+    endsWith(transaction.to, '.eth')
+      ? transaction.to
+      : startsWith(transaction.to, '0x')
+        ? transaction.to
+        : `0x${transaction.to}`;
+  const value = transaction.amount ? toWei(transaction.amount) : '0x00';
+  const data = transaction.data ? transaction.data : '0x';
+  const _gasPrice = transaction.gasPrice || (await getGasPrice());
   const estimateGasData = value === '0x00' ? { from, to, data } : { to, data };
   const _gasLimit =
-    gasLimit || (await estimateGas(estimateGasData));
+    transaction.gasLimit || (await estimateGas(estimateGasData));
   const nonce = await getTransactionCount(from);
   const tx = {
     data,
@@ -124,12 +129,16 @@ export const getTxDetails = async ({
  * @param  {Object}  transaction { asset, from, to, amount, gasPrice }
  * @return {Object}
  */
-export const getTransferTokenTransaction = transaction => {
+export const getTransferTokenTransaction = async (transaction) => {
   const transferMethodHash = smartContractMethods.token_transfer.hash;
   const value = convertStringToHex(
     convertAmountToAssetAmount(transaction.amount, transaction.asset.decimals),
   );
-  const recipient = removeHexPrefix(transaction.to);
+  let recipient = transaction.to;
+  if (endsWith(transaction.to, '.eth')) {
+    recipient = await web3Provider.resolveName(transaction.to);
+  }
+  recipient = removeHexPrefix(recipient);
   const dataString = getDataString(transferMethodHash, [recipient, value]);
   return {
     from: transaction.from,
@@ -145,34 +154,20 @@ export const getTransferTokenTransaction = transaction => {
  * @param {Object} transaction { asset, from, to, amount, gasPrice }
  * @return {Promise}
  */
-export const createSignableTransaction = (transaction) =>
+export const createSignableTransaction = transaction =>
   new Promise((resolve, reject) => {
-    console.log('create signable txn, amount', transaction);
-    transaction.value = transaction.amount;
     if (transaction.asset.symbol !== 'ETH') {
-      transaction = getTransferTokenTransaction(transaction);
+      getTransferTokenTransaction(transaction)
+      .then(result => {
+        getTxDetails(result)
+          .then(txDetails => resolve(txDetails))
+          .catch(error => reject(error));
+      }).catch(error => reject(error));
+    } else {
+      getTxDetails(transaction)
+        .then(txDetails => resolve(txDetails))
+        .catch(error => reject(error));
     }
-    const from =
-      startsWith(transaction.from, '0x')
-        ? transaction.from
-        : `0x${transaction.from}`;
-    const to =
-      endsWith(transaction.to, '.eth')
-        ? transaction.to
-        : startsWith(transaction.to, '0x')
-          ? transaction.to
-          : `0x${transaction.to}`;
-    const value = transaction.value ? toWei(transaction.value) : '0x00';
-    const data = transaction.data ? transaction.data : '0x';
-    getTxDetails({
-      from,
-      to,
-      data,
-      value,
-      gasPrice: transaction.gasPrice,
-      gasLimit: transaction.gasLimit,
-    }).then(txDetails => resolve(txDetails))
-    .catch(error => reject(error));
   });
 
 /**

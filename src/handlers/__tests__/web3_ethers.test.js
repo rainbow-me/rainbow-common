@@ -1,9 +1,11 @@
 import '@babel/polyfill';
 import {
+  createSignableTransaction,
   estimateGas,
   estimateGasLimit,
   getGasPrice,
   getTransactionCount,
+  getTransferTokenTransaction,
   toChecksumAddress,
   toHex,
   toWei,
@@ -38,6 +40,74 @@ test('toChecksumAddress', async () => {
   const expectedResult = '0x1492004547FF0eFd778CC2c14E794B26B4701105';
   const result = await toChecksumAddress(address);
   expect(result).toBe(expectedResult);
+});
+
+test('createSignableEthTransaction', async () => {
+  const from = '0x1492004547ff0efd778cc2c14e794b26b4701105';
+  const transaction = {
+    amount: '0.01',
+    asset: {
+      address: null,
+      decimals: 18,
+      name: 'Ethereum',
+      symbol: 'ETH'
+    },
+    to: 'jinrummie.eth',
+    from,
+    gasPrice: '12345',
+    gasLimit: '21000',
+  };
+  const result = await createSignableTransaction(transaction);
+  console.log('result', result);
+  expect(result.from).toBe(from);
+  expect(result.to).toBe('jinrummie.eth');
+  expect(result.data).toBe('0x');
+});
+
+test('createSignableTransactionTokenTransfer', async () => {
+  const from = '0x1492004547ff0efd778cc2c14e794b26b4701105';
+  const contractAddress = '0xE41d2489571d322189246DaFA5ebDe1F4699F498';
+  const transaction = {
+    amount: '0.01',
+    asset: {
+      address: contractAddress,
+      decimals: 18,
+      name: '0x Protocol Token',
+      symbol: 'ZRX'
+    },
+    to: 'jinrummie.eth',
+    from,
+    gasPrice: '12345',
+    gasLimit: '21000',
+  };
+  const result = await createSignableTransaction(transaction);
+  const expectedData = "0xa9059cbb0000000000000000000000001492004547ff0efd778cc2c14e794b26b4701105000000000000000000000000000000000000000000000000002386f26fc10000";
+  expect(result.from).toBe(from);
+  expect(result.to).toBe(contractAddress);
+  expect(result.data).toBe(expectedData);
+});
+
+test('getTransferTokenTransaction', async () => {
+  const from = '0x1492004547ff0efd778cc2c14e794b26b4701105';
+  const contractAddress = '0xE41d2489571d322189246DaFA5ebDe1F4699F498';
+  const transaction = {
+    amount: '0.01',
+    asset: {
+      address: contractAddress,
+      decimals: 18,
+      name: '0x Protocol Token',
+      symbol: 'ZRX'
+    },
+    to: 'jinrummie.eth',
+    from,
+    gasPrice: '12345',
+    gasLimit: '21000',
+  };
+  const result = await getTransferTokenTransaction(transaction);
+  const expectedData = "0xa9059cbb0000000000000000000000001492004547ff0efd778cc2c14e794b26b4701105000000000000000000000000000000000000000000000000002386f26fc10000";
+  expect(result.from).toBe(from);
+  expect(result.to).toBe(contractAddress);
+  expect(result.data).toBe(expectedData);
 });
 
 test('toChecksumAddressAllCaps', async () => {
