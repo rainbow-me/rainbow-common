@@ -122,20 +122,23 @@ export const withSendComponentWithData = (SendComponent, options) => {
       }
 
       if (recipient !== prevProps.recipient) {
-        this.setState({ isValidAddress: await isValidAddress(recipient) });
+        const validAddress = await isValidAddress(recipient);
+        this.setState({ isValidAddress: validAddress });
       }
     }
 
     onAddressInputFocus = async () => {
       const { recipient } = this.props;
 
-      this.setState({ isValidAddress: await isValidAddress(recipient) });
+      const validAddress = await isValidAddress(recipient);
+      this.setState({ isValidAddress: validAddress });
     };
 
     onAddressInputBlur = async () => {
       const { recipient } = this.props;
 
-      this.setState({ isValidAddress: await isValidAddress(recipient) });
+      const validAddress = await isValidAddress(recipient);
+      this.setState({ isValidAddress: validAddress });
     };
 
     onGoBack = () => this.props.sendToggleConfirmationView(false);
