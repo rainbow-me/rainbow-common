@@ -6,6 +6,7 @@ import {
   getTransactionCount,
   toChecksumAddress,
   toHex,
+  toWei,
 } from '../web3_ethers'
 
 const estimateGasData = {
@@ -21,6 +22,16 @@ const estimateGasDataToEns = {
   data: '0x',
   value: '0x0',
 }
+
+test('toWei', () => {
+  const wei = toWei('1');
+  expect(wei).toBe('1000000000000000000');
+});
+
+test('toWei', () => {
+  const wei = toWei('1');
+  expect(wei).toBe('1000000000000000000');
+});
 
 test('toChecksumAddress', async () => {
   const address = '0x1492004547ff0efd778cc2c14e794b26b4701105';
@@ -50,7 +61,7 @@ test('toChecksumInvalidAddress', async () => {
 
 test('getGasPrice', async () => {
   const result = await getGasPrice();
-  expect(result).toBeGreaterThan(0);
+  expect(result).not.toBe('');
 });
 
 test('estimateGas', async () => {
@@ -65,6 +76,11 @@ test('estimateGasToEns', async () => {
 
 test('toHex', () => {
   const result = toHex(37170);
+  expect(result).toBe('0x9132');
+});
+
+test('toHexString', () => {
+  const result = toHex('37170');
   expect(result).toBe('0x9132');
 });
 

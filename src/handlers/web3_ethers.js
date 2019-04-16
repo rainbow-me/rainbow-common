@@ -44,36 +44,41 @@ export const toChecksumAddress = async (address) => {
   }
 };
 
-export const toHex = value => ethers.utils.hexlify(value);
+/**
+ * @desc convert to hex representation
+ * @param  {String|Number} value
+ * @return {String} hex value
+ */
+export const toHex = value => ethers.utils.hexlify(ethers.utils.bigNumberify(value));
 
 /**
  * @desc estimate gas limit
  * @param  {String} address
- * @return {String} checksum address
+ * @return {Number} gas limit
  */
 export const estimateGas = async (estimateGasData) => { 
   const gasLimit = await web3Provider.estimateGas(estimateGasData);
   return gasLimit.toNumber();
 };
 
+/**
+ * @desc get gas price
+ * @return {String} gas price
+ */
 export const getGasPrice = async () => { 
   const gasPrice = await web3Provider.getGasPrice();
-  return gasPrice.toNumber();
+  return gasPrice.toString();
 };
 
 /**
- * @desc convert from wei to ether
- * @param  {Number} wei
- * @return {BigNumber}
- */
-export const fromWei = wei => ethers.utils.formatEther(wei);
-
-/**
  * @desc convert from ether to wei
- * @param  {Number} ether
- * @return {BigNumber}
+ * @param  {String} value in ether
+ * @return {String} value in wei
  */
-export const toWei = ether => ethers.utils.parseEther(ether);
+export const toWei = ether => {
+  const result = ethers.utils.parseEther(ether);
+  return result.toString();
+};
 
 /**
  * @desc get address transaction count
@@ -142,6 +147,7 @@ export const getTransferTokenTransaction = transaction => {
  */
 export const createSignableTransaction = (transaction) =>
   new Promise((resolve, reject) => {
+    console.log('create signable txn, amount', transaction);
     transaction.value = transaction.amount;
     if (transaction.asset.symbol !== 'ETH') {
       transaction = getTransferTokenTransaction(transaction);
