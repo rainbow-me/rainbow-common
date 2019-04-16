@@ -81,6 +81,7 @@ test('createSignableTransactionTokenTransfer', async () => {
   };
   const result = await createSignableTransaction(transaction);
   const expectedData = "0xa9059cbb0000000000000000000000001492004547ff0efd778cc2c14e794b26b4701105000000000000000000000000000000000000000000000000002386f26fc10000";
+  console.log('result', result);
   expect(result.from).toBe(from);
   expect(result.to).toBe(contractAddress);
   expect(result.data).toBe(expectedData);

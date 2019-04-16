@@ -111,6 +111,7 @@ export const sendModalInit = (options = {}) => (dispatch, getState) => {
 };
 
 export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
+  console.log('send update gas price');
   const {
     selected,
     address,
@@ -128,6 +129,7 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
   const _gasPriceOption = newGasPriceOption || gasPriceOption;
   let _gasPrice = _gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
   dispatch({ type: SEND_UPDATE_GAS_PRICE_REQUEST });
+  console.log('estimate gas limit from _send');
   estimateGasLimit({
     asset: selected,
     address,
