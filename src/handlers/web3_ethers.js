@@ -187,9 +187,13 @@ export const estimateGasLimit = async ({
     amount && Number(amount)
       ? convertAmountToBigNumber(amount)
       : asset.balance.amount * 0.1;
-  let _recipient =
-    recipient && await isValidAddress(recipient)
-      ? recipient
+  let _recipient = recipient;
+  if (endsWith(recipient, '.eth')) {
+    _recipient = await web3Provider.resolveName(recipient);
+  }
+  _recipient =
+    _recipient && await isValidAddress(_recipient)
+      ? _recipient
       : '0x737e583620f4ac1842d4e354789ca0c5e0651fbb';
   let estimateGasData = { to: _recipient, data };
   if (asset.symbol !== 'ETH') {
