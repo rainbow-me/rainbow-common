@@ -203,7 +203,10 @@ export const estimateGasLimit = async ({
     const transferMethodHash = smartContractMethods.token_transfer.hash;
     console.log('asset', asset);
     let value = convertAssetAmountFromBigNumber(_amount, asset.decimals);
+    console.log('_amount', _amount);
+    console.log('value', value);
     value = convertStringToHex(value);
+    console.log('value', value);
     // TODO
     data = getDataString(transferMethodHash, [
       removeHexPrefix(_recipient),
