@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { replace } from 'lodash';
+import { endsWith, startsWith, replace } from 'lodash';
 import { REACT_APP_INFURA_PROJECT_ID } from 'react-native-dotenv';
 import { isValidAddress } from '../helpers/validators';
 import { getDataString, removeHexPrefix } from '../helpers/utilities';
@@ -147,13 +147,15 @@ export const createSignableTransaction = (transaction) =>
       transaction = getTransferTokenTransaction(transaction);
     }
     const from =
-      transaction.from.substr(0, 2) === '0x'
+      startsWith(transaction.from, '0x')
         ? transaction.from
         : `0x${transaction.from}`;
     const to =
-      transaction.to.substr(0, 2) === '0x'
+      endsWith(transaction.to, '.eth')
         ? transaction.to
-        : `0x${transaction.to}`;
+        : startsWith(transaction.to, '0x')
+          ? transaction.to
+          : `0x${transaction.to}`;
     const value = transaction.value ? toWei(transaction.value) : '0x00';
     const data = transaction.data ? transaction.data : '0x';
     getTxDetails({

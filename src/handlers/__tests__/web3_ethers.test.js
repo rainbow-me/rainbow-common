@@ -12,7 +12,14 @@ const estimateGasData = {
   from: '0x1492004547FF0eFd778CC2c14E794B26B4701105',
   to: '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2',
   data: '0xa9059cbb0000000000000000000000001492004547ff0efd778cc2c14e794b26b4701105000000000000000000000000000000000000000000000000002386f26fc10000',
-  value: '0x0'
+  value: '0x0',
+}
+
+const estimateGasDataToEns = {
+  from: '0x1492004547FF0eFd778CC2c14E794B26B4701105',
+  to: 'jinrummie.eth',
+  data: '0x',
+  value: '0x0',
 }
 
 test('toChecksumAddress', async () => {
@@ -49,6 +56,11 @@ test('getGasPrice', async () => {
 test('estimateGas', async () => {
   const result = await estimateGas(estimateGasData);
   expect(result).toBe(37170);
+});
+
+test('estimateGasToEns', async () => {
+  const result = await estimateGas(estimateGasDataToEns);
+  expect(result).toBe(21000);
 });
 
 test('toHex', () => {

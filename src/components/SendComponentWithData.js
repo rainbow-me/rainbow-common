@@ -123,7 +123,6 @@ export const withSendComponentWithData = (SendComponent, options) => {
 
       if (recipient !== prevProps.recipient) {
         const validAddress = await isValidAddress(recipient);
-        console.log('isvalidaddress', validAddress);
         this.setState({ isValidAddress: validAddress });
       }
     }
@@ -131,18 +130,14 @@ export const withSendComponentWithData = (SendComponent, options) => {
     onAddressInputFocus = async () => {
       const { recipient } = this.props;
 
-      console.log('address input focus', recipient);
       const validAddress = await isValidAddress(recipient);
-      console.log('isvalidaddress', validAddress);
       this.setState({ isValidAddress: validAddress });
     };
 
     onAddressInputBlur = async () => {
       const { recipient } = this.props;
-      console.log('address input blur', recipient);
 
       const validAddress = await isValidAddress(recipient);
-      console.log('isvalidaddress', validAddress);
       this.setState({ isValidAddress: validAddress });
     };
 
