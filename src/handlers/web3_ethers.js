@@ -109,9 +109,11 @@ export const getTxDetails = async (transaction) => {
   const data = transaction.data ? transaction.data : '0x';
   const _gasPrice = transaction.gasPrice || (await getGasPrice());
   const estimateGasData = value === '0x00' ? { from, to, data } : { to, data };
+  console.log('estimate gas from txdetails', estimateGasData);
   const _gasLimit =
     transaction.gasLimit || (await estimateGas(estimateGasData));
   const nonce = await getTransactionCount(from);
+  console.log('value!', value);
   const tx = {
     data,
     from,
@@ -199,13 +201,17 @@ export const estimateGasLimit = async ({
   let estimateGasData = { to: _recipient, data };
   if (asset.symbol !== 'ETH') {
     const transferMethodHash = smartContractMethods.token_transfer.hash;
+    console.log('asset', asset);
     let value = convertAssetAmountFromBigNumber(_amount, asset.decimals);
     value = convertStringToHex(value);
+    // TODO
     data = getDataString(transferMethodHash, [
       removeHexPrefix(_recipient),
       value,
     ]);
     estimateGasData = { from: address, to: asset.address, data, value: '0x0' };
+    // TODO duplicate logic
+    console.log('estimate gas limit', estimateGasData);
     gasLimit = await estimateGas(estimateGasData);
   } else {
     let value = convertAssetAmountFromBigNumber(_amount, asset.decimals);
