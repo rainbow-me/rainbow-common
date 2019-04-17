@@ -290,6 +290,10 @@ export const estimateGasLimit = async ({
     ]);
     const estimateGasData = { from: address, to: asset.address, data, value: '0x0' };
     gasLimit = await web3Instance.eth.estimateGas(estimateGasData);
+  } else {
+    let value = convertAssetAmountFromBigNumber(_amount, asset.decimals);
+    estimateGasData = { from: address, to: recipient, data, value };
+    gasLimit = await web3Instance.eth.estimateGas(estimateGasData);
   }
   return gasLimit;
 };
