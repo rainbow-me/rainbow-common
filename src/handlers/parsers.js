@@ -421,8 +421,8 @@ export const parseNewTransaction = async (
     : null;
 
   let value = null;
-  if (txDetails.value) {
-    const amount = convertAmountToBigNumber(txDetails.value);
+  if (txDetails.amount) {
+    const amount = convertAmountToBigNumber(txDetails.amount);
     value = {
       amount,
       display: convertAmountToDisplay(amount, txDetails.asset),
