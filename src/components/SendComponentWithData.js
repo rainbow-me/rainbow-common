@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose } from 'recompact';
-import { get } from 'lodash';
+import { endsWith, get } from 'lodash';
 import lang from '../languages';
 import { withAccountAssets } from '../hoc';
 import {
@@ -111,7 +111,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
     async componentDidUpdate(prevProps) {
       const { assetAmount, recipient, selected, sendUpdateGasPrice } = this.props;
 
-      if (recipient.length >= 42) {
+      if (recipient.length >= 42 || endsWith(recipient, '.eth')) {
         if (selected.symbol !== prevProps.selected.symbol) {
           sendUpdateGasPrice();
         } else if (recipient !== prevProps.recipient) {
