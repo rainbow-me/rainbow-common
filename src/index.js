@@ -80,12 +80,14 @@ import {
 import { getCountdown, getLocalTimeDate, sortList } from './helpers';
 import {
   apiGetGasPrices,
+  estimateGas,
   estimateGasLimit,
   getTransactionCount,
   isHexString,
   parseError,
   parseGasPrices,
   toChecksumAddress,
+  toHex,
   web3Provider,
 } from './handlers';
 import * as commonStorage from './handlers/commonStorage';
@@ -112,6 +114,7 @@ export {
   convertStringToNumber,
   divide,
   ellipseText,
+  estimateGas,
   estimateGasLimit,
   formatInputDecimals,
   fromWei,
@@ -161,6 +164,7 @@ export {
   supportedLanguages,
   supportedNativeCurrencies,
   toChecksumAddress,
+  toHex,
   transactionData,
   transactions,
   transactionsRefreshState,
