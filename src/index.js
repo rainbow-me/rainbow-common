@@ -85,7 +85,7 @@ import {
   parseError,
   parseGasPrices,
   toChecksumAddress,
-  web3Instance,
+  web3Provider,
 } from './handlers';
 import * as commonStorage from './handlers/commonStorage';
 export {
@@ -164,7 +164,7 @@ export {
   transactionsRefreshState,
   transactionsUpdateHasPendingTransaction,
   transactionsAddNewTransaction,
-  web3Instance,
+  web3Provider,
   withAccountAssets,
   withSendComponentWithData,
 };

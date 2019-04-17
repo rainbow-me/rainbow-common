@@ -2,8 +2,8 @@ import {
   estimateGasLimit,
   getTransactionCount,
   toChecksumAddress,
-  web3Instance,
-} from './web3';
+  web3Provider,
+} from './web3_ethers';
 import {
   parseError,
   parseGasPrices
@@ -18,5 +18,5 @@ export {
   parseError,
   parseGasPrices,
   toChecksumAddress,
-  web3Instance,
+  web3Provider,
 };

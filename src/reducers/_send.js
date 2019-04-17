@@ -21,7 +21,7 @@ import {
 import {
   createSignableTransaction,
   estimateGasLimit,
-} from '../handlers/web3';
+} from '../handlers/web3_ethers';
 import { notificationShow } from './_notification';
 import {
   transactionsAddNewTransaction,

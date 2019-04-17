@@ -5,7 +5,7 @@ import {
   saveLanguage,
   saveNativeCurrency,
 } from '../handlers/commonStorage';
-import { web3SetHttpProvider } from '../handlers/web3';
+import { web3SetHttpProvider } from '../handlers/web3_ethers';
 
 // -- Constants ------------------------------------------------------------- //
 const SETTINGS_UPDATE_NETWORK = 'settings/SETTINGS_UPDATE_NETWORK';
@@ -53,7 +53,7 @@ export const settingsUpdateAccountAddress = (accountAddress, accountType) => (
 };
 
 export const settingsUpdateNetwork = network => dispatch => {
-  web3SetHttpProvider(`https://${network}.infura.io/`);
+  web3SetHttpProvider(network);
   dispatch({ type: SETTINGS_UPDATE_NETWORK, payload: network });
 };
 
