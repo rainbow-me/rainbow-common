@@ -111,6 +111,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
     async componentDidUpdate(prevProps) {
       const { assetAmount, recipient, selected, sendUpdateGasPrice } = this.props;
 
+      // TODO should check if valid address
       if (recipient.length >= 42 || endsWith(recipient, '.eth')) {
         if (selected.symbol !== prevProps.selected.symbol) {
           sendUpdateGasPrice();

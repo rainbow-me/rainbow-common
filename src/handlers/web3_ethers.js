@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { endsWith, startsWith, replace } from 'lodash';
+import { replace } from 'lodash';
 import { REACT_APP_INFURA_PROJECT_ID } from 'react-native-dotenv';
 import { isValidAddress } from '../helpers/validators';
 import { getDataString, removeHexPrefix } from '../helpers/utilities';
@@ -30,6 +30,13 @@ export const web3SetHttpProvider = network => {
   // TODO check network is valid network
   web3Provider = new ethers.providers.JsonRpcProvider(replace(infura_url, 'network', network));
 };
+
+/**
+ * @desc check if hex string
+ * @param {String} value
+ * @return {Boolean}
+ */
+export const isHexString = value => ethers.utils.isHexString(value);
 
 /**
  * @desc convert to checksum address
@@ -93,17 +100,10 @@ export const getTransactionCount = address =>
  * @param  {Object} transaction { from, to, data, value, gasPrice, gasLimit }
  * @return {Object}
  */
+// TODO tx details from / to better start with 0x if hex string
 export const getTxDetails = async (transaction) => {
-  const from =
-    startsWith(transaction.from, '0x')
-      ? transaction.from
-      : `0x${transaction.from}`;
-  const to =
-    endsWith(transaction.to, '.eth')
-      ? transaction.to
-      : startsWith(transaction.to, '0x')
-        ? transaction.to
-        : `0x${transaction.to}`;
+  const from = transaction.from;
+  const to = transaction.to;
   const value = transaction.amount ? toWei(transaction.amount) : '0x00';
   const data = transaction.data ? transaction.data : '0x';
   const _gasPrice = transaction.gasPrice || (await getGasPrice());
@@ -133,7 +133,7 @@ export const getTransferTokenTransaction = async (transaction) => {
     convertAmountToAssetAmount(transaction.amount, transaction.asset.decimals),
   );
   let recipient = transaction.to;
-  if (endsWith(transaction.to, '.eth')) {
+  if (!isHexString(transaction.to)) {
     recipient = await web3Provider.resolveName(transaction.to);
   }
   recipient = removeHexPrefix(recipient);
@@ -186,7 +186,7 @@ export const estimateGasLimit = async ({
       ? convertAmountToBigNumber(amount)
       : asset.balance.amount * 0.1;
   let _recipient = recipient;
-  if (endsWith(recipient, '.eth')) {
+  if (!isHexString(recipient)) { // TODO redundant logic
     _recipient = await web3Provider.resolveName(recipient);
   }
   _recipient =

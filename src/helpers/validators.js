@@ -1,4 +1,4 @@
-import { endsWith, startsWith } from 'lodash';
+import { isHexString } from '../handlers/web3_ethers';
 import { toChecksumAddress, web3Provider } from '../handlers/web3_ethers';
 
 /**
@@ -17,7 +17,7 @@ export const isValidEmail = email =>
  * @return {Boolean}
  */
 export const isValidAddress = async (address) => {
-  if (endsWith(address, '.eth')) {
+  if (!isHexString(address)) {
     try {
       const resolvedAddress = await web3Provider.resolveName(address);
       return !!resolvedAddress;
@@ -25,7 +25,6 @@ export const isValidAddress = async (address) => {
       return false;
     }
   }
-  if (!startsWith(address, '0x')) return false;
   if (!/^(0x)?[0-9a-f]{40}$/i.test(address)) return false;
   if (/^(0x)?[0-9a-f]{40}$/.test(address)
     || /^(0x)?[0-9A-F]{40}$/.test(address)) return true;
