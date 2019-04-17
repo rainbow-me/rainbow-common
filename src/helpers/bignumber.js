@@ -442,29 +442,3 @@ export const formatInputDecimals = (inputOne, inputTwo) => {
     .replace(/,/g, '');
   return result;
 };
-
-/**
- * @desc checks if asset has a high market value
- * @param  {Object}   asset
- * @return {Boolean}
- */
-export const hasHighMarketValue = asset =>
-  // TODO
-  asset.native &&
-  greaterThan(
-    convertAmountFromBigNumber(asset.native.balance.amount),
-    asset.native.selected.assetLimit,
-  );
-
-/**
- * @desc checks if asset has a low market value
- * @param  {Object}   asset
- * @return {Boolean}
- */
-export const hasLowMarketValue = asset =>
-  // TODO
-  asset.native &&
-  smallerThan(
-    convertAmountFromBigNumber(asset.native.balance.amount),
-    asset.native.selected.assetLimit,
-  );
