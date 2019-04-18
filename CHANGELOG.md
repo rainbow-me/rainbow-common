@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/)
 * ENS support
 
 ### Changed
+* Upped limit for OpenSea assets
 
 ### Removed
 
