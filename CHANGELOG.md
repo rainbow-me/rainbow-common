@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/)
 
 ### Changed
 * Upped limit for OpenSea assets
+* Fix for initially estimating gas
 
 ### Removed
 
