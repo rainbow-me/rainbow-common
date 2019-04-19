@@ -221,13 +221,16 @@ test('estimateGasLimitForNormalEthTransfer', async () => {
 });
 
 test('estimateGasLimitForTokenTransfer8Decimals', async () => {
-  const amount = '0.89961234';
+  const amount = undefined;
   const address = '0x1492004547FF0eFd778CC2c14E794B26B4701105';
   const recipient = '0x1492004547FF0eFd778CC2c14E794B26B4701105';
 	const asset = {
 		name: 'Exceed',
 		symbol: 'EXC',
 		address: '0x1eAe15d9f4FA16f5278D02d2f8bDA8b0dcd31f71',
+    balance: {
+      amount: "1.97899609544e+21",
+    },
 		decimals: 8,
 	};
   const gasLimit = await estimateGasLimit({
@@ -236,7 +239,7 @@ test('estimateGasLimitForTokenTransfer8Decimals', async () => {
     recipient,
     amount,
   });
-  expect(gasLimit).toBe(37631);
+  expect(gasLimit).toBe(37695);
 });
 
 test('estimateGasLimitForTokenTransfer', async () => {
