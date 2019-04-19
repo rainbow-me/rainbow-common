@@ -202,13 +202,13 @@ export const sendTransaction = (transactionDetails, signAndSendTransactionCb) =>
   const { accountType } = getState().settings;
   const { selected } = getState().send;
   const txDetails = {
-    asset: asset,
+    amount,
+    asset,
     from: address,
-    to: recipient,
-    nonce: null,
-    amount: amount,
-    gasPrice: gasPrice.value.amount,
     gasLimit: gasLimit,
+    gasPrice: gasPrice.value.amount,
+    nonce: null,
+    to: recipient,
   };
   return createSignableTransaction(txDetails)
     .then(signableTransactionDetails => {
