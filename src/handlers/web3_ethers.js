@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { replace } from 'lodash';
+import { get, replace } from 'lodash';
 import { REACT_APP_INFURA_PROJECT_ID } from 'react-native-dotenv';
 import { isValidAddress } from '../helpers/validators';
 import { getDataString, removeHexPrefix } from '../helpers/utilities';
@@ -208,6 +208,7 @@ export const estimateGasLimit = async ({
   amount,
 }) => {
   let gasLimit = ethUnits.basic_tx;
+  let data = '0x';
   let _amount =
     amount && Number(amount)
       ? convertAmountToAssetAmount(amount, asset.decimals)
