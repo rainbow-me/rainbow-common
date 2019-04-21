@@ -22,6 +22,9 @@ const EMPTY_ARRAY = [];
 const assetsSelector = state => state.assets;
 const nativeCurrencySelector = state => state.nativeCurrency;
 const nativePricesSelector = state => state.prices;
+const uniqueTokensSelector = state => state.uniqueTokens;
+
+const sendableUniqueTokens = (uniqueTokens) => filter(uniqueTokens, ['isSendable', true]);
 
 const sortAssetsByNativeAmount = (originalAssets, nativeCurrency, prices) => {
   let assetsNativePrices = originalAssets;
@@ -119,4 +122,9 @@ const parseAssetsNative = (
 export const sortAssetsByNativeAmountSelector = createSelector(
   [ assetsSelector, nativeCurrencySelector, nativePricesSelector ],
   sortAssetsByNativeAmount
+);
+
+export const sendableUniqueTokensSelector = createSelector(
+  [ uniqueTokensSelector ],
+  sendableUniqueTokens
 );
