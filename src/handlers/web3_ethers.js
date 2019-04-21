@@ -6,11 +6,14 @@ import { getDataString, removeHexPrefix } from '../helpers/utilities';
 import {
   convertStringToNumber,
   convertNumberToString,
+  convertAmountFromBigNumber,
   convertAmountToBigNumber,
   convertAssetAmountFromBigNumber,
   convertHexToString,
   convertStringToHex,
   convertAmountToAssetAmount,
+  handleSignificantDecimals,
+  multiply,
 } from '../helpers/bignumber';
 import ethUnits from '../references/ethereum-units.json';
 import smartContractMethods from '../references/smartcontract-methods.json';
@@ -104,12 +107,12 @@ export const getTransactionCount = address =>
 export const getTxDetails = async (transaction) => {
   const from = transaction.from;
   const to = transaction.to;
-  const value = transaction.amount ? toWei(transaction.amount) : '0x00';
   const data = transaction.data ? transaction.data : '0x';
-  const _gasPrice = transaction.gasPrice || (await getGasPrice());
-  const estimateGasData = value === '0x00' ? { from, to, data } : { to, data };
+  const value = transaction.amount ? toWei(transaction.amount) : '0x00';
+  const estimateGasData = { from, to, data, value };
   const _gasLimit =
     transaction.gasLimit || (await estimateGas(estimateGasData));
+  const _gasPrice = transaction.gasPrice || (await getGasPrice());
   const nonce = await getTransactionCount(from);
   const tx = {
     data,
@@ -187,6 +190,12 @@ export const createSignableTransaction = async (transaction) => {
   }
 };
 
+const estimateAssetBalancePortion = (assetBalance, decimals) => {
+  const portion = multiply(convertAmountFromBigNumber(assetBalance), 0.1);
+  const trimmed = handleSignificantDecimals(portion, decimals);
+  return convertAmountToAssetAmount(trimmed, decimals);
+};
+
 /**
  * @desc estimate gas limit
  * @param {Object} [{selected, address, recipient, amount, gasPrice}]
@@ -201,8 +210,9 @@ export const estimateGasLimit = async ({
   let gasLimit = ethUnits.basic_tx;
   let _amount =
     amount && Number(amount)
-      ? convertAmountToBigNumber(amount)
-      : asset.balance.amount * 0.1;
+      ? convertAmountToAssetAmount(amount, asset.decimals)
+      : estimateAssetBalancePortion(asset.balance.amount, asset.decimals);
+  let value = _amount.toString();
   let _recipient = recipient;
   if (!isHexString(recipient)) {
     _recipient = await web3Provider.resolveName(recipient);
@@ -211,34 +221,23 @@ export const estimateGasLimit = async ({
     _recipient && await isValidAddress(_recipient)
       ? _recipient
       : '0x737e583620f4ac1842d4e354789ca0c5e0651fbb';
+  let estimateGasData = { from: address, to: _recipient, data, value };
   if (asset.isNft) {
     const transferMethodHash = smartContractMethods.nft_transfer_from.hash;
     const data = getDataString(transferMethodHash, [
       removeHexPrefix(_recipient),
       convertStringToHex(asset.id)
     ]);
-    const estimateGasData = { from: address, to: asset.asset_contract.address, data };
+    estimateGasData = { from: address, to: asset.asset_contract.address, data };
     console.log('EST GAS DATA', estimateGasData);
-    try {
-      gasLimit = await estimateGas(estimateGasData);
-      console.log('NFT gas limit', gasLimit);
-    } catch (error) {
-      console.log('error estimating gas limit for nft', error);
-    }
   } else if (asset.symbol !== 'ETH') {
     const transferMethodHash = smartContractMethods.token_transfer.hash;
-    let value = convertAssetAmountFromBigNumber(_amount, asset.decimals);
-    value = convertStringToHex(value);
+    value = convertStringToHex(_amount);
     data = getDataString(transferMethodHash, [
       removeHexPrefix(_recipient),
       value,
     ]);
     estimateGasData = { from: address, to: asset.address, data, value: '0x0' };
-    gasLimit = await estimateGas(estimateGasData);
-  } else {
-    let value = convertAssetAmountFromBigNumber(_amount, asset.decimals);
-    estimateGasData = { from: address, to: _recipient, data, value };
-    gasLimit = await estimateGas(estimateGasData);
   }
-  return gasLimit;
+  return await estimateGas(estimateGasData);
 };
