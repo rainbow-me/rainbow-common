@@ -348,13 +348,12 @@ export const sendUpdateNativeAmount = nativeAmount => (dispatch, getState) => {
   });
 };
 
-export const sendUpdateSelected = (value, isNft=false) => (dispatch, getState) => {
-  if (isNft) {
+export const sendUpdateSelected = (value) => (dispatch, getState) => {
+  if (get(value, 'isNft')) {
     dispatch({ type: SEND_UPDATE_NFT_SELECTED, payload: {
       selected: {
         ...value,
         symbol: value.asset_contract.name,
-        isNft: true
       },
       isSufficientBalance: true,
     }});
