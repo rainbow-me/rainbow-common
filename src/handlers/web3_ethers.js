@@ -125,29 +125,33 @@ export const getTxDetails = async (transaction) => {
   return tx;
 };
 
+export const resolveNameOrAddress = async (nameOrAddress) => {
+  if (!isHexString(nameOrAddress)) {
+    return await web3Provider.resolveName(nameOrAddress);
+  }
+  return nameOrAddress;
+};
+
 /**
  * @desc get transfer nft transaction
  * @param  {Object}  transaction { asset, from, to, gasPrice }
  * @return {Object}
  */
 export const getTransferNftTransaction = async (transaction) => {
-  const transferMethodHash = smartContractMethods.nft_transfer_from.hash;
-  const tokenId = convertStringToHex(get(transaction, 'asset.id'));
-  let recipient = transaction.to;
-  if (!isHexString(transaction.to)) {
-    recipient = await web3Provider.resolveName(transaction.to);
-  }
-  recipient = removeHexPrefix(recipient);
-  const dataString = getDataString(transferMethodHash, [recipient, tokenId]);
+  console.log('get txn nft', transaction);
+  const assetId = get(transaction, 'asset.id');
+  let recipient = await resolveNameOrAddress(transaction.to);
+  let from = transaction.address;
+  const contractAddress = get(transaction, 'asset.asset_contract.address');
+  const data = getDataForNftTransfer(from, recipient, assetId);
   return {
-    from: transaction.from,
-    to: transaction.asset.address,
-    data: dataString,
+    from,
+    to: contractAddress,
+    data,
     gasPrice: transaction.gasPrice,
     gasLimit: transaction.gasLimit,
   };
 };
-
 
 /**
  * @desc get transfer token transaction
@@ -155,20 +159,13 @@ export const getTransferNftTransaction = async (transaction) => {
  * @return {Object}
  */
 export const getTransferTokenTransaction = async (transaction) => {
-  const transferMethodHash = smartContractMethods.token_transfer.hash;
-  const value = convertStringToHex(
-    convertAmountToAssetAmount(transaction.amount, transaction.asset.decimals),
-  );
-  let recipient = transaction.to;
-  if (!isHexString(transaction.to)) {
-    recipient = await web3Provider.resolveName(transaction.to);
-  }
-  recipient = removeHexPrefix(recipient);
-  const dataString = getDataString(transferMethodHash, [recipient, value]);
+  const value = convertAmountToAssetAmount(transaction.amount, transaction.asset.decimals);
+  let recipient = await resolveNameOrAddress(transaction.to);
+  const data = getDataForTokenTransfer(value, recipient);
   return {
     from: transaction.from,
     to: transaction.asset.address,
-    data: dataString,
+    data,
     gasPrice: transaction.gasPrice,
     gasLimit: transaction.gasLimit,
   };
@@ -202,6 +199,25 @@ const estimateAssetBalancePortion = (asset) => {
   return '0';
 };
 
+const getDataForTokenTransfer = (value, to) => {
+  const transferMethodHash = smartContractMethods.token_transfer.hash;
+  const data = getDataString(transferMethodHash, [
+    removeHexPrefix(to),
+    convertStringToHex(value),
+  ]);
+  return data;
+};
+
+const getDataForNftTransfer = (from, to, assetId) => {
+  const transferMethodHash = smartContractMethods.nft_transfer_from.hash;
+  const data = getDataString(transferMethodHash, [
+    removeHexPrefix(from),
+    removeHexPrefix(to),
+    convertStringToHex(assetId)
+  ]);
+  return data;
+};
+
 /**
  * @desc estimate gas limit
  * @param {Object} [{selected, address, recipient, amount, gasPrice}]
@@ -215,39 +231,22 @@ export const estimateGasLimit = async ({
 }) => {
   let gasLimit = ethUnits.basic_tx;
   let data = '0x';
-  // TODO if nft amount doesn't matter
   let _amount =
     amount && Number(amount)
       ? convertAmountToAssetAmount(amount, asset.decimals)
       : estimateAssetBalancePortion(asset);
   let value = _amount.toString();
-  let _recipient = recipient;
-  if (!isHexString(recipient)) {
-    _recipient = await web3Provider.resolveName(recipient);
-  }
-  _recipient =
-    _recipient && await isValidAddress(_recipient)
+  let _recipient = await resolveNameOrAddress(recipient);
+  _recipient = _recipient
       ? _recipient
       : '0x737e583620f4ac1842d4e354789ca0c5e0651fbb';
   let estimateGasData = { from: address, to: _recipient, data, value };
   if (asset.isNft) {
-    console.log('nft asset', asset);
-    const transferMethodHash = smartContractMethods.nft_transfer_from.hash;
-    const data = getDataString(transferMethodHash, [
-      removeHexPrefix(address),
-      removeHexPrefix(_recipient),
-      convertStringToHex(asset.id)
-    ]);
-    console.log('data string', data);
-    estimateGasData = { from: address, to: asset.asset_contract.address, data };
-    console.log('EST GAS DATA', estimateGasData);
+    const contractAddress = get(asset, 'asset_contract.address');
+    const data = getDataForNftTransfer(address, _recipient, asset.id);
+    estimateGasData = { from: address, to: contractAddress, data };
   } else if (asset.symbol !== 'ETH') {
-    const transferMethodHash = smartContractMethods.token_transfer.hash;
-    value = convertStringToHex(_amount);
-    data = getDataString(transferMethodHash, [
-      removeHexPrefix(_recipient),
-      value,
-    ]);
+    const data = getDataForTokenTransfer(_amount, _recipient);
     estimateGasData = { from: address, to: asset.address, data, value: '0x0' };
   }
   return await estimateGas(estimateGasData);

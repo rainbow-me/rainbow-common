@@ -7,6 +7,7 @@ import {
   getTransactionCount,
   getTransferTokenTransaction,
   isHexString,
+  resolveNameOrAddress,
   toChecksumAddress,
   toHex,
   toWei,
@@ -25,6 +26,23 @@ const estimateGasDataToEns = {
   data: '0x',
   value: '0x0',
 }
+
+test('resolveNameOrAddress', async () => {
+  const address = '0x1492004547FF0eFd778CC2c14E794B26B4701105';
+  const result = await resolveNameOrAddress(address);
+  expect(result).toBe(address);
+});
+
+test('resolveNameOrAddressEns', async () => {
+  const address = '0x1492004547FF0eFd778CC2c14E794B26B4701105';
+  const result = await resolveNameOrAddress("jinrummie.eth");
+  expect(result).toBe(address);
+});
+
+test('resolveNameOrAddressFakeEns', async () => {
+  const result = await resolveNameOrAddress("blah");
+  expect(result).toBe(null);
+});
 
 test('isHexString', () => {
   const address = '0x1492004547FF0eFd778CC2c14E794B26B4701105';
@@ -161,6 +179,7 @@ test('estimateGas', async () => {
   expect(result).toBe(37170);
 });
 
+/*
 test('estimateGasSendingNftV1', async () => {
   const estimateGasDataNft = {
     from: "0x1492004547FF0eFd778CC2c14E794B26B4701105",
@@ -170,6 +189,7 @@ test('estimateGasSendingNftV1', async () => {
   const result = await estimateGas(estimateGasDataNft);
   expect(result).toBe(1);
 });
+*/
 
 test('estimateGasSendingNftV3', async () => {
   const estimateGasDataNft = {
