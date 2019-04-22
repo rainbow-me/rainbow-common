@@ -26,7 +26,6 @@ const nativePricesSelector = state => state.prices;
 const uniqueTokensSelector = state => state.uniqueTokens;
 
 const sendableUniqueTokens = (uniqueTokens) => {
-  console.log('sendable un tok', uniqueTokens);
   return {
     sendableUniqueTokens: filter(uniqueTokens, ['isSendable', true]),
   };
