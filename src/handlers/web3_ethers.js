@@ -184,6 +184,7 @@ export const createSignableTransaction = async (transaction) => {
     const isNft = get(transaction, 'asset.isNft', false);
     const result = isNft ? await getTransferNftTransaction(transaction) :
       await getTransferTokenTransaction(transaction);
+    console.log('get nft txn', result);
     return await getTxDetails(result)
   } else {
     return await getTxDetails(transaction);

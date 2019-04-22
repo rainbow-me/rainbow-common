@@ -349,6 +349,7 @@ export const sendUpdateNativeAmount = nativeAmount => (dispatch, getState) => {
 };
 
 export const sendUpdateSelected = (value) => (dispatch, getState) => {
+  console.log('send updated selected', value);
   if (get(value, 'isNft')) {
     dispatch({ type: SEND_UPDATE_NFT_SELECTED, payload: {
       selected: {

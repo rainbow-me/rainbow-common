@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose } from 'recompact';
-import { endsWith, get } from 'lodash';
+import { get } from 'lodash';
 import lang from '../languages';
 import { withAccountAssets } from '../hoc';
 import {
@@ -109,20 +109,20 @@ export const withSendComponentWithData = (SendComponent, options) => {
     }
 
     async componentDidUpdate(prevProps) {
+      console.log('Send Component did update');
       const { assetAmount, recipient, selected, sendUpdateGasPrice } = this.props;
 
-      // TODO should check if valid address
-      if (recipient.length >= 42 || endsWith(recipient, '.eth')) {
+      if (recipient !== prevProps.recipient) {
+        const validAddress = await isValidAddress(recipient);
+        this.setState({ isValidAddress: validAddress });
+      }
+
+      if (this.state.isValidAddress) {
         if ((selected.symbol !== prevProps.selected.symbol) ||
            (recipient !== prevProps.recipient) ||
            (assetAmount !== prevProps.assetAmount)) {
           sendUpdateGasPrice();
         }
-      }
-
-      if (recipient !== prevProps.recipient) {
-        const validAddress = await isValidAddress(recipient);
-        this.setState({ isValidAddress: validAddress });
       }
     }
 
@@ -151,6 +151,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
     };
 
     onSubmit = async (event) => {
+      console.log('SendComponent onSubmit');
       if (event && typeof event.preventDefault === 'function') {
         event.preventDefault();
       }
@@ -164,6 +165,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
         return;
       }
 
+      // Balance checks
       if (!this.props.confirm) {
         const isAddressValid = await isValidAddress(this.props.recipient);
         if (!isAddressValid) {
@@ -195,7 +197,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
 
             return;
           }
-        } else {
+        } else if (!this.props.selected.isNft) {
           const { requestedAmount, balance, txFee } = transactionData(
             this.props.assets,
             this.props.assetAmount,
@@ -242,7 +244,6 @@ export const withSendComponentWithData = (SendComponent, options) => {
 
     onClose = () => {
       this.props.sendClearFields();
-      // TODO: close function ?? (previously was to hit modal reducer)
     };
 
     updateGasPrice = gasPrice => {
