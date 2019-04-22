@@ -161,6 +161,26 @@ test('estimateGas', async () => {
   expect(result).toBe(37170);
 });
 
+test('estimateGasSendingNftV1', async () => {
+  const estimateGasDataNft = {
+    from: "0x1492004547FF0eFd778CC2c14E794B26B4701105",
+    to: "0x06012c8cf97bead5deae237070f9587f8e7a266d",
+    data: "0x23b872dd0000000000000000000000001492004547ff0efd778cc2c14e794b26b47011050000000000000000000000001492004547ff0efd778cc2c14e794b26b470110500000000000000000000000000000000000000000000000000000000000aa26d"
+  };
+  const result = await estimateGas(estimateGasDataNft);
+  expect(result).toBe(1);
+});
+
+test('estimateGasSendingNftV3', async () => {
+  const estimateGasDataNft = {
+    from: "0x1492004547FF0eFd778CC2c14E794B26B4701105",
+    to: "0x2aea4add166ebf38b63d09a75de1a7b94aa24163",
+    data: "0x23b872dd0000000000000000000000001492004547ff0efd778cc2c14e794b26b47011050000000000000000000000001492004547ff0efd778cc2c14e794b26b470110500000000000000000000000000000000000000000000000000000000000003c2"
+  };
+  const result = await estimateGas(estimateGasDataNft);
+  expect(result).toBe(154177);
+});
+
 test('estimateGasToEns', async () => {
   const result = await estimateGas(estimateGasDataToEns);
   expect(result).toBe(21000);
