@@ -191,10 +191,15 @@ export const createSignableTransaction = async (transaction) => {
   }
 };
 
-const estimateAssetBalancePortion = (assetBalance, decimals) => {
-  const portion = multiply(convertAmountFromBigNumber(assetBalance), 0.1);
-  const trimmed = handleSignificantDecimals(portion, decimals);
-  return convertAmountToAssetAmount(trimmed, decimals);
+const estimateAssetBalancePortion = (asset) => {
+  if (!asset.isNft) {
+    const assetBalance = get(asset, 'balance.amount');
+    const decimals = get(asset, 'decimals');
+    const portion = multiply(convertAmountFromBigNumber(assetBalance), 0.1);
+    const trimmed = handleSignificantDecimals(portion, decimals);
+    return convertAmountToAssetAmount(trimmed, decimals);
+  }
+  return '0';
 };
 
 /**
@@ -210,10 +215,11 @@ export const estimateGasLimit = async ({
 }) => {
   let gasLimit = ethUnits.basic_tx;
   let data = '0x';
+  // TODO if nft amount doesn't matter
   let _amount =
     amount && Number(amount)
       ? convertAmountToAssetAmount(amount, asset.decimals)
-      : estimateAssetBalancePortion(asset.balance.amount, asset.decimals);
+      : estimateAssetBalancePortion(asset);
   let value = _amount.toString();
   let _recipient = recipient;
   if (!isHexString(recipient)) {

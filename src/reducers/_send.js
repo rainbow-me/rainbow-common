@@ -56,6 +56,7 @@ const SEND_UPDATE_HAS_PENDING_TRANSACTION =
 const SEND_CLEAR_FIELDS = 'send/SEND_CLEAR_FIELDS';
 
 function getBalanceAmount(assets, gasPrice, selected) {
+  console.log('get balance amount');
   let amount = '';
 
   if (selected.symbol === 'ETH') {
@@ -112,6 +113,7 @@ export const sendModalInit = (options = {}) => (dispatch, getState) => {
 };
 
 export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
+  console.log('send update gas price');
   const {
     selected,
     address,
@@ -136,6 +138,7 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
     amount: assetAmount,
   })
     .then(gasLimit => {
+      console.log('estimated gas limit');
       const { prices } = getState().prices;
       const { assets } = getState().assets;
       const { nativeCurrency } = getState().settings;

@@ -121,6 +121,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
         if ((selected.symbol !== prevProps.selected.symbol) ||
            (recipient !== prevProps.recipient) ||
            (assetAmount !== prevProps.assetAmount)) {
+          console.log('send update gas price');
           sendUpdateGasPrice();
         }
       }
