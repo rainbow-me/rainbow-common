@@ -25,7 +25,9 @@ const nativeCurrencySelector = state => state.nativeCurrency;
 const nativePricesSelector = state => state.prices;
 const uniqueTokensSelector = state => state.uniqueTokens;
 
-const sendableUniqueTokens = (uniqueTokens) => filter(uniqueTokens, ['isSendable', true]);
+const sendableUniqueTokens = (uniqueTokens) => {
+  sendableUniqueTokens: filter(uniqueTokens, ['isSendable', true])
+};
 
 const sortAssetsByNativeAmount = (originalAssets, nativeCurrency, prices) => {
   let assetsNativePrices = originalAssets;
