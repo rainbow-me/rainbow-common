@@ -138,10 +138,9 @@ export const resolveNameOrAddress = async (nameOrAddress) => {
  * @return {Object}
  */
 export const getTransferNftTransaction = async (transaction) => {
-  console.log('get txn nft', transaction);
   const assetId = get(transaction, 'asset.id');
   let recipient = await resolveNameOrAddress(transaction.to);
-  let from = transaction.address;
+  let from = transaction.from;
   const contractAddress = get(transaction, 'asset.asset_contract.address');
   const data = getDataForNftTransfer(from, recipient, assetId);
   return {

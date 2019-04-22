@@ -6,6 +6,7 @@ import {
   getGasPrice,
   getTransactionCount,
   getTransferTokenTransaction,
+  getTransferNftTransaction,
   isHexString,
   resolveNameOrAddress,
   toChecksumAddress,
@@ -145,6 +146,35 @@ test('getTransferTokenTransaction', async () => {
   };
   const result = await getTransferTokenTransaction(transaction);
   const expectedData = "0xa9059cbb0000000000000000000000001492004547ff0efd778cc2c14e794b26b4701105000000000000000000000000000000000000000000000000002386f26fc10000";
+  expect(result.from).toBe(from);
+  expect(result.to).toBe(contractAddress);
+  expect(result.data).toBe(expectedData);
+});
+
+test('getTransferNftTransaction', async () => {
+  const contractAddress = '0xE41d2489571d322189246DaFA5ebDe1F4699F498';
+  const from = "0x1492004547FF0eFd778CC2c14E794B26B4701105";
+  const transaction = {
+    amount: "1",
+    asset: {
+      asset_contract: {
+        address: contractAddress,
+      },
+      id: 962,
+      isNft: true,
+      isSendable: true,
+      name: "Carlos Matos",
+      symbol: "Kudos",
+    },
+    from,
+    gasLimit: 154177,
+    gasPrice: "3000000000",
+    nonce: null,
+    to: "0x1492004547ff0efd778cc2c14e794b26b4701105",
+  };
+
+  const result = await getTransferNftTransaction(transaction);
+  const expectedData = "0x23b872dd0000000000000000000000001492004547ff0efd778cc2c14e794b26b47011050000000000000000000000001492004547ff0efd778cc2c14e794b26b470110500000000000000000000000000000000000000000000000000000000000003c2";
   expect(result.from).toBe(from);
   expect(result.to).toBe(contractAddress);
   expect(result.data).toBe(expectedData);
