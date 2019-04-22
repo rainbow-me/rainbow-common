@@ -195,7 +195,7 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
 
 export const sendTransaction = (transactionDetails, signAndSendTransactionCb) => (dispatch, getState) => new Promise((resolve, reject) => {
   dispatch({ type: SEND_TRANSACTION_REQUEST });
-  console.log('sendTransaction');
+  console.log('sendTransaction', transactionDetails);
   const {
     address,
     recipient,
