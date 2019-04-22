@@ -132,7 +132,7 @@ export const getTxDetails = async (transaction) => {
  */
 export const getTransferNftTransaction = async (transaction) => {
   const transferMethodHash = smartContractMethods.nft_transfer_from.hash;
-  const tokenId = convertStringToHex(asset.id);
+  const tokenId = convertStringToHex(get(transaction, 'asset.id'));
   let recipient = transaction.to;
   if (!isHexString(transaction.to)) {
     recipient = await web3Provider.resolveName(transaction.to);
