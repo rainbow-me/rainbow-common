@@ -26,7 +26,10 @@ const nativePricesSelector = state => state.prices;
 const uniqueTokensSelector = state => state.uniqueTokens;
 
 const sendableUniqueTokens = (uniqueTokens) => {
-  sendableUniqueTokens: filter(uniqueTokens, ['isSendable', true])
+  console.log('sendable un tok', uniqueTokens);
+  return {
+    sendableUniqueTokens: filter(uniqueTokens, ['isSendable', true]),
+  };
 };
 
 const sortAssetsByNativeAmount = (originalAssets, nativeCurrency, prices) => {
