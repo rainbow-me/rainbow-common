@@ -359,7 +359,6 @@ export const sendUpdateSelected = (value) => (dispatch, getState) => {
         ...value,
         symbol: value.asset_contract.name,
       },
-      isSufficientBalance: true,
     }});
   } else {
     const state = getState();
@@ -495,8 +494,9 @@ export default (state = INITIAL_STATE, action) => {
     case SEND_UPDATE_NFT_SELECTED:
       return {
         ...state,
+        assetAmount: '1',
         selected: action.payload.selected,
-        isSufficientBalance: action.payload.isSufficientBalance
+        isSufficientBalance: true,
       };
     case SEND_CLEAR_FIELDS:
       return { ...state, ...INITIAL_STATE };
