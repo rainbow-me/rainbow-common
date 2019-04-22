@@ -231,11 +231,14 @@ export const estimateGasLimit = async ({
       : '0x737e583620f4ac1842d4e354789ca0c5e0651fbb';
   let estimateGasData = { from: address, to: _recipient, data, value };
   if (asset.isNft) {
+    console.log('nft asset', asset);
     const transferMethodHash = smartContractMethods.nft_transfer_from.hash;
     const data = getDataString(transferMethodHash, [
+      removeHexPrefix(address),
       removeHexPrefix(_recipient),
       convertStringToHex(asset.id)
     ]);
+    console.log('data string', data);
     estimateGasData = { from: address, to: asset.asset_contract.address, data };
     console.log('EST GAS DATA', estimateGasData);
   } else if (asset.symbol !== 'ETH') {
