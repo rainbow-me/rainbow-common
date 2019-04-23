@@ -3,6 +3,7 @@ import {
   createSignableTransaction,
   estimateGas,
   estimateGasLimit,
+  getDataForNftTransfer,
   getGasPrice,
   getTransactionCount,
   getTransferTokenTransaction,
@@ -151,20 +152,49 @@ test('getTransferTokenTransaction', async () => {
   expect(result.data).toBe(expectedData);
 });
 
+test('getDataForNftTransferV3', () => {
+  const address = "0x1492004547FF0eFd778CC2c14E794B26B4701105";
+  const  asset = {
+    asset_contract: {
+      nft_version: "3.0",
+    },
+    id: 962,
+  };
+
+  const result = getDataForNftTransfer(address, address, asset);
+  const expectedData = "0x23b872dd0000000000000000000000001492004547ff0efd778cc2c14e794b26b47011050000000000000000000000001492004547ff0efd778cc2c14e794b26b470110500000000000000000000000000000000000000000000000000000000000003c2";
+  expect(result).toBe(expectedData);
+});
+
+test('getDataForNftTransferV1', () => {
+  const address = '0x1492004547FF0eFd778CC2c14E794B26B4701105';
+  const  asset = {
+    asset_contract: {
+      nft_version: '1.0',
+    },
+    id: '1385201',
+  };
+
+  const result = getDataForNftTransfer(address, address, asset);
+  const expectedData = '0xa9059cbb0000000000000000000000001492004547ff0efd778cc2c14e794b26b470110500000000000000000000000000000000000000000000000000000000001522f1';
+  expect(result).toBe(expectedData);
+});
+
 test('getTransferNftTransaction', async () => {
   const contractAddress = '0xE41d2489571d322189246DaFA5ebDe1F4699F498';
-  const from = "0x1492004547FF0eFd778CC2c14E794B26B4701105";
+  const from = '0x1492004547FF0eFd778CC2c14E794B26B4701105';
   const transaction = {
-    amount: "1",
+    amount: '1',
     asset: {
       asset_contract: {
         address: contractAddress,
+        nft_version: '3.0',
       },
       id: 962,
       isNft: true,
       isSendable: true,
-      name: "Carlos Matos",
-      symbol: "Kudos",
+      name: 'Carlos Matos',
+      symbol: 'Kudos',
     },
     from,
     gasLimit: 154177,
@@ -209,23 +239,21 @@ test('estimateGas', async () => {
   expect(result).toBe(37170);
 });
 
-/*
 test('estimateGasSendingNftV1', async () => {
   const estimateGasDataNft = {
-    from: "0x1492004547FF0eFd778CC2c14E794B26B4701105",
-    to: "0x06012c8cf97bead5deae237070f9587f8e7a266d",
-    data: "0x23b872dd0000000000000000000000001492004547ff0efd778cc2c14e794b26b47011050000000000000000000000001492004547ff0efd778cc2c14e794b26b470110500000000000000000000000000000000000000000000000000000000000aa26d"
+    from: '0x1492004547FF0eFd778CC2c14E794B26B4701105',
+    to: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
+    data: '0xa9059cbb0000000000000000000000001492004547ff0efd778cc2c14e794b26b470110500000000000000000000000000000000000000000000000000000000001522f1',
   };
   const result = await estimateGas(estimateGasDataNft);
-  expect(result).toBe(1);
+  expect(result).toBe(54315);
 });
-*/
 
 test('estimateGasSendingNftV3', async () => {
   const estimateGasDataNft = {
-    from: "0x1492004547FF0eFd778CC2c14E794B26B4701105",
-    to: "0x2aea4add166ebf38b63d09a75de1a7b94aa24163",
-    data: "0x23b872dd0000000000000000000000001492004547ff0efd778cc2c14e794b26b47011050000000000000000000000001492004547ff0efd778cc2c14e794b26b470110500000000000000000000000000000000000000000000000000000000000003c2"
+    from: '0x1492004547FF0eFd778CC2c14E794B26B4701105',
+    to: '0x2aea4add166ebf38b63d09a75de1a7b94aa24163',
+    data: '0x23b872dd0000000000000000000000001492004547ff0efd778cc2c14e794b26b47011050000000000000000000000001492004547ff0efd778cc2c14e794b26b470110500000000000000000000000000000000000000000000000000000000000003c2'
   };
   const result = await estimateGas(estimateGasDataNft);
   expect(result).toBe(154177);
@@ -299,7 +327,7 @@ test('estimateGasLimitForTokenTransfer8Decimals', async () => {
 		symbol: 'EXC',
 		address: '0x1eAe15d9f4FA16f5278D02d2f8bDA8b0dcd31f71',
     balance: {
-      amount: "1.97899609544e+21",
+      amount: '1.97899609544e+21',
     },
 		decimals: 8,
 	};
@@ -310,6 +338,29 @@ test('estimateGasLimitForTokenTransfer8Decimals', async () => {
     amount,
   });
   expect(gasLimit).toBe(37695);
+});
+
+test('estimateGasLimitForNftTransfer', async () => {
+  const address = '0x1492004547FF0eFd778CC2c14E794B26B4701105';
+  const recipient = '0x1492004547FF0eFd778CC2c14E794B26B4701105';
+  const contractAddress =  '0x06012c8cf97bead5deae237070f9587f8e7a266d';
+  const  asset = {
+    asset_contract: {
+      address: contractAddress,
+      nft_version: '1.0',
+    },
+    id: '1385201',
+    isNft: true,
+    isSendable: true,
+    name: "Fifi",
+    symbol: "CryptoKitties",
+  };
+  const gasLimit = await estimateGasLimit({
+    asset,
+    address,
+    recipient,
+  });
+  expect(gasLimit).toBe(54315);
 });
 
 test('estimateGasLimitForTokenTransfer', async () => {
