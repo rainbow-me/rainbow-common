@@ -80,13 +80,15 @@ import {
 import { getCountdown, getLocalTimeDate, sortList } from './helpers';
 import {
   apiGetGasPrices,
-  apiGetSinglePrice,
+  estimateGas,
   estimateGasLimit,
   getTransactionCount,
+  isHexString,
   parseError,
   parseGasPrices,
   toChecksumAddress,
-  web3Instance,
+  toHex,
+  web3Provider,
 } from './handlers';
 import * as commonStorage from './handlers/commonStorage';
 export {
@@ -94,7 +96,6 @@ export {
   accountLoadState,
   add,
   apiGetGasPrices,
-  apiGetSinglePrice,
   assets,
   assetsRefreshState,
   calcTxFee,
@@ -113,6 +114,7 @@ export {
   convertStringToNumber,
   divide,
   ellipseText,
+  estimateGas,
   estimateGasLimit,
   formatInputDecimals,
   fromWei,
@@ -127,6 +129,7 @@ export {
   handleSignificantDecimals,
   hasHighMarketValue,
   hasLowMarketValue,
+  isHexString,
   isValidAddress,
   isValidEmail,
   isValidSeedPhrase,
@@ -161,12 +164,13 @@ export {
   supportedLanguages,
   supportedNativeCurrencies,
   toChecksumAddress,
+  toHex,
   transactionData,
   transactions,
   transactionsRefreshState,
   transactionsUpdateHasPendingTransaction,
   transactionsAddNewTransaction,
-  web3Instance,
+  web3Provider,
   withAccountAssets,
   withSendComponentWithData,
 };

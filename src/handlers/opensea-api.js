@@ -22,7 +22,7 @@ const api = axios.create({
  */
 export const apiGetAccountUniqueTokens = async (address = '') => {
   try {
-    const data = await api.get(`/assets?owner=${address}`);
+    const data = await api.get(`/assets?owner=${address}&limit=300`);
     return parseAccountUniqueTokens(data);
   } catch(error) {
     console.log('Error getting unique tokens', error);

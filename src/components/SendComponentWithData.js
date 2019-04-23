@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose } from 'recompact';
-import { get } from 'lodash';
+import { endsWith, get } from 'lodash';
 import lang from '../languages';
 import { withAccountAssets } from '../hoc';
 import {
@@ -76,8 +76,8 @@ export const withSendComponentWithData = (SendComponent, options) => {
       recipient: PropTypes.string.isRequired,
       nativeAmount: PropTypes.string.isRequired,
       assetAmount: PropTypes.string.isRequired,
-      isSufficientGas: PropTypes.func.isRequired,
-      isSufficientBalance: PropTypes.func.isRequired,
+      isSufficientGas: PropTypes.bool.isRequired,
+      isSufficientBalance: PropTypes.bool.isRequired,
       txHash: PropTypes.string.isRequired,
       selected: PropTypes.object.isRequired,
       gasPrice: PropTypes.object.isRequired,
@@ -108,10 +108,11 @@ export const withSendComponentWithData = (SendComponent, options) => {
       this.props.sendModalInit({ defaultAsset: this.defaultAsset, gasFormat: this.gasFormat });
     }
 
-    componentDidUpdate(prevProps) {
+    async componentDidUpdate(prevProps) {
       const { assetAmount, recipient, selected, sendUpdateGasPrice } = this.props;
 
-      if (recipient.length >= 42) {
+      // TODO should check if valid address
+      if (recipient.length >= 42 || endsWith(recipient, '.eth')) {
         if (selected.symbol !== prevProps.selected.symbol) {
           sendUpdateGasPrice();
         } else if (recipient !== prevProps.recipient) {
@@ -122,20 +123,23 @@ export const withSendComponentWithData = (SendComponent, options) => {
       }
 
       if (recipient !== prevProps.recipient) {
-        this.setState({ isValidAddress: isValidAddress(recipient) });
+        const validAddress = await isValidAddress(recipient);
+        this.setState({ isValidAddress: validAddress });
       }
     }
 
-    onAddressInputFocus = () => {
+    onAddressInputFocus = async () => {
       const { recipient } = this.props;
 
-      this.setState({ isValidAddress: isValidAddress(recipient) });
+      const validAddress = await isValidAddress(recipient);
+      this.setState({ isValidAddress: validAddress });
     };
 
-    onAddressInputBlur = () => {
+    onAddressInputBlur = async () => {
       const { recipient } = this.props;
 
-      this.setState({ isValidAddress: isValidAddress(recipient) });
+      const validAddress = await isValidAddress(recipient);
+      this.setState({ isValidAddress: validAddress });
     };
 
     onGoBack = () => this.props.sendToggleConfirmationView(false);
@@ -148,7 +152,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
       this.props.sendModalInit({ defaultAsset: this.defaultAsset });
     };
 
-    onSubmit = (event) => {
+    onSubmit = async (event) => {
       if (event && typeof event.preventDefault === 'function') {
         event.preventDefault();
       }
@@ -163,7 +167,8 @@ export const withSendComponentWithData = (SendComponent, options) => {
       }
 
       if (!this.props.confirm) {
-        if (!isValidAddress(this.props.recipient)) {
+        const isAddressValid = await isValidAddress(this.props.recipient);
+        if (!isAddressValid) {
           this.props.notificationShow(
             lang.t('notification.error.invalid_address'),
             true,
@@ -250,11 +255,14 @@ export const withSendComponentWithData = (SendComponent, options) => {
     toggleQRCodeReader = () =>
       this.setState({ showQRCodeReader: !this.state.showQRCodeReader });
 
-    onQRCodeValidate = rawData => {
+    onQRCodeValidate = async (rawData) => {
       const data = rawData.match(/0x\w{40}/g)
         ? rawData.match(/0x\w{40}/g)[0]
         : null;
-      const result = data ? isValidAddress(data) : false;
+      let result = false;
+      if (data) {
+        result = await isValidAddress(data);
+      }
       const onError = () =>
         this.props.notificationShow(
           lang.t('notification.error.invalid_address_scanned'),

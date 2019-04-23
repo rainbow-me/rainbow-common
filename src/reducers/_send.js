@@ -21,7 +21,7 @@ import {
 import {
   createSignableTransaction,
   estimateGasLimit,
-} from '../handlers/web3';
+} from '../handlers/web3_ethers';
 import { notificationShow } from './_notification';
 import {
   transactionsAddNewTransaction,
@@ -58,10 +58,8 @@ function getBalanceAmount(assets, gasPrice, selected) {
   let amount = '';
 
   if (selected.symbol === 'ETH') {
-    const ethereum = assets.filter(
-      asset => asset.symbol === 'ETH',
-    )[0];
-    const balanceAmount = ethereum.balance.amount;
+    const ethereum = assets.filter(asset => asset.symbol === 'ETH');
+    const balanceAmount = get(ethereum, '[0].balance.amount', 0);
     const txFeeAmount = gasPrice.txFee.value.amount;
     const remaining = convertStringToNumber(
       subtract(balanceAmount, txFeeAmount),
@@ -128,7 +126,7 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
   let gasPrices = getState().send.gasPrices;
   if (!Object.keys(gasPrices).length) return null;
   const _gasPriceOption = newGasPriceOption || gasPriceOption;
-  const _gasPrice = gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
+  let _gasPrice = _gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
   dispatch({ type: SEND_UPDATE_GAS_PRICE_REQUEST });
   estimateGasLimit({
     asset: selected,
@@ -141,12 +139,11 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
       const { assets } = getState().assets;
       const { nativeCurrency } = getState().settings;
       gasPrices = parseGasPricesTxFee(gasPrices, prices, gasLimit, nativeCurrency);
+      _gasPrice = gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
 
-      const ethereum = assets.filter(
-        asset => asset.symbol === 'ETH',
-      )[0];
+      const ethereum = assets.filter(asset => asset.symbol === 'ETH');
 
-      const balanceAmount = ethereum.balance.amount;
+      const balanceAmount = get(ethereum, '[0].balance.amount', 0);
       const txFeeAmount = _gasPrice.txFee.value.amount;
 
       dispatch({
@@ -203,28 +200,20 @@ export const sendTransaction = (transactionDetails, signAndSendTransactionCb) =>
     gasLimit,
   } = transactionDetails;
   const { accountType } = getState().settings;
-  const { selected, trackingAmount } = getState().send;
+  const { selected } = getState().send;
   const txDetails = {
-    asset: asset,
+    amount,
+    asset,
     from: address,
-    to: recipient,
-    nonce: null,
-    amount: amount,
-    gasPrice: gasPrice.value.amount,
     gasLimit: gasLimit,
+    gasPrice: gasPrice.value.amount,
+    nonce: null,
+    to: recipient,
   };
   return createSignableTransaction(txDetails)
     .then(signableTransactionDetails => {
-      const symbol = get(selected, 'symbol', 'unknown');
-      const address = get(selected, 'address', '');
-      const trackingName = `${symbol}:${address}`;
       signAndSendTransactionCb({
         accountType,
-        tracking: {
-          action: 'send',
-          amount: parseFloat(trackingAmount),
-          name: trackingName,
-        },
         transaction: signableTransactionDetails,
       })
       .then((txHash) => {
@@ -382,20 +371,22 @@ export const sendClearFields = () => ({ type: SEND_CLEAR_FIELDS });
 
 // -- Reducer --------------------------------------------------------------- //
 const INITIAL_STATE = {
+  address: '',
+  assetAmount: '',
+  confirm: false,
+  fetching: false,
   fetchingGasPrices: false,
+  gasLimit: ethUnits.basic_tx,
   gasPrice: {},
   gasPrices: {},
-  gasLimit: ethUnits.basic_tx,
   gasPriceOption: 'average',
-  fetching: false,
-  address: '',
-  recipient: '',
+  isSufficientBalance: false,
+  isSufficientGas: false,
   nativeAmount: '',
-  trackingAmount: '',
-  assetAmount: '',
-  txHash: '',
-  confirm: false,
+  recipient: '',
   selected: {},
+  trackingAmount: '',
+  txHash: '',
 };
 
 export default (state = INITIAL_STATE, action) => {

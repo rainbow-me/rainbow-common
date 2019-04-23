@@ -3,6 +3,7 @@ import lang from '../languages';
 import { apiGetAccountTransactions } from '../handlers/api';
 import {
   parseError,
+  parseHistoricalTransactions,
   parseNewTransaction,
 } from '../handlers/parsers';
 import {
@@ -61,7 +62,6 @@ export const transactionsRefreshState = () => (dispatch, getState) => new Promis
         accountAddress,
         network,
         lastTxHash,
-        page: 1
       })).then(() => {
         resolve(true);
       }).catch(error => {
@@ -138,43 +138,42 @@ const getPages = ({
   accountAddress,
   network,
   lastTxHash,
-  page
 }) => dispatch => new Promise((resolve, reject) => {
-  apiGetAccountTransactions(assets, accountAddress, network, lastTxHash, page)
-    .then(({ data: transactionsForPage, pages }) => {
-      if (!transactionsForPage.length) {
+  apiGetAccountTransactions(assets, accountAddress, network, lastTxHash)
+    .then(({ data }) => {
+      if (!data.length) {
         dispatch({
           type: TRANSACTIONS_GET_NO_NEW_PAYLOAD_SUCCESS
         });
         resolve(true);
+        return;
       }
+      const chunkedTransactions = _.chunk(data, 50);
+
+      let _newPages = newTransactions;
       let updatedPendingTransactions = pendingTransactions;
-      if (pendingTransactions.length) {
-        updatedPendingTransactions = _.filter(pendingTransactions, (pendingTxn) => {
-          const matchingElement = _.find(transactionsForPage, (txn) => txn.hash && txn.hash.startsWith(pendingTxn.hash));
-          return !matchingElement;
+
+      _.forEach(chunkedTransactions, (chunk, index) => {
+        parseHistoricalTransactions(chunk, index).then(transactionsForPage => {
+          if (updatedPendingTransactions.length) {
+            updatedPendingTransactions = _.filter(updatedPendingTransactions, (pendingTxn) => {
+              const matchingElement = _.find(transactionsForPage, (txn) => txn.hash
+                && txn.from.toLowerCase() === accountAddress.toLowerCase()
+                && (txn.hash.startsWith(pendingTxn.hash)
+                  || (txn.nonce && (txn.nonce >= pendingTxn.nonce))));
+              return !matchingElement;
+            });
+          }
+          _newPages = _newPages.concat(transactionsForPage);
+          let _transactions = _.unionBy(updatedPendingTransactions, _newPages, confirmedTransactions, 'hash');
+          saveLocalTransactions(accountAddress, _transactions, network);
+          dispatch({
+            type: TRANSACTIONS_GET_TRANSACTIONS_SUCCESS,
+            payload: _transactions,
+          });
         });
-      }
-      let _newPages = newTransactions.concat(transactionsForPage);
-      let _transactions = _.unionBy(updatedPendingTransactions, _newPages, confirmedTransactions, 'hash');
-      saveLocalTransactions(accountAddress, _transactions, network);
-      dispatch({
-        type: TRANSACTIONS_GET_TRANSACTIONS_SUCCESS,
-        payload: _transactions,
       });
-      if (page < pages) {
-        const nextPage = page + 1;
-        dispatch(getPages({
-          assets,
-          newTransactions: _newPages,
-          pendingTransactions: updatedPendingTransactions,
-          confirmedTransactions,
-          accountAddress,
-          network,
-          lastTxHash,
-          page: nextPage
-        }));
-      }
+
       resolve(true);
     })
     .catch(error => {

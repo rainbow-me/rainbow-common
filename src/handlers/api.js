@@ -3,7 +3,6 @@ import { findIndex, slice } from 'lodash';
 import {
   parseAccountAssets,
   parseAccountTransactions,
-  parseHistoricalTransactions,
 } from './parsers';
 import { formatInputDecimals } from '../helpers/bignumber';
 import nativeCurrencies from '../references/native-currencies.json';
@@ -27,7 +26,8 @@ const cryptocompare = axios.create({
  * @return {Promise}
  */
 export const apiGetPrices = (assets = []) => {
-  const assetsQuery = JSON.stringify(assets).replace(/[[\]"]/gi, '');
+  const assetSymbols = assets.concat('ETH', 'BTC');
+  const assetsQuery = JSON.stringify(assetSymbols).replace(/[[\]"]/gi, '');
   const nativeQuery = JSON.stringify(Object.keys(nativeCurrencies)).replace(
     /[[\]"]/gi,
     '',
@@ -45,7 +45,7 @@ export const apiGetPrices = (assets = []) => {
  */
 export const apiGetHistoricalPrices = (
   assetSymbol = '',
-  timestamp = Date.now(), // TODO error: timestamp would be ms
+  timestamp,
 ) => {
   const nativeQuery = JSON.stringify(Object.keys(nativeCurrencies)).replace(
     /[[\]"]/gi,
@@ -57,11 +57,11 @@ export const apiGetHistoricalPrices = (
 };
 
 /**
- * Configuration for balance api
+ * Configuration for Dapple api
  * @type axios instance
  */
 const api = axios.create({
-  baseURL: 'https://indexer.balance.io',
+  baseURL: 'https://dapple.rainbow.me',
   timeout: 30000, // 30 secs
   headers: {
     'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ export const apiGetAccountBalances = async (
     const { data } = await api.get(`/get_balances/${network}/${address}`);
     return parseAccountAssets(data, address);
   } catch (error) {
-    console.log('Error getting acct balances from proxy', error);
+    console.log('Error getting acct balances from dapple', error);
     throw error;
   }
 };
@@ -115,7 +115,6 @@ export const apiGetAccountTransactions = async (
   page = 1,
 ) => {
   try {
-    // TODO: hit api directly instead of through indexer
     let { data } = await apiGetTransactionData(address, network, page);
     let { transactions, pages } = await parseAccountTransactions(data, assets, address, network);
     if (transactions.length && lastTxHash) {
@@ -125,8 +124,7 @@ export const apiGetAccountTransactions = async (
         pages = page;
       }
     }
-    transactions = await parseHistoricalTransactions(transactions, page);
-    const result = { data: transactions, pages };
+    const result = { data: transactions };
     return result;
   } catch (error) {
     console.log('Error getting acct transactions', error);

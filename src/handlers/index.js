@@ -1,24 +1,28 @@
 import {
+  estimateGas,
   estimateGasLimit,
   getTransactionCount,
+  isHexString,
   toChecksumAddress,
-  web3Instance,
-} from './web3';
+  toHex,
+  web3Provider,
+} from './web3_ethers';
 import {
   parseError,
   parseGasPrices
 } from './parsers';
 import {
   apiGetGasPrices,
-  apiGetSinglePrice,
 } from './api';
 export {
   apiGetGasPrices,
-  apiGetSinglePrice,
+  estimateGas,
   estimateGasLimit,
   getTransactionCount,
+  isHexString,
   parseError,
   parseGasPrices,
   toChecksumAddress,
-  web3Instance,
+  toHex,
+  web3Provider,
 };

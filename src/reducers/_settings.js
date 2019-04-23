@@ -5,8 +5,8 @@ import {
   saveLanguage,
   saveNativeCurrency,
 } from '../handlers/commonStorage';
-import { web3SetHttpProvider } from '../handlers/web3';
 import { getNetworkFromChainId, getChainIdFromNetwork } from '../helpers/utilities';
+import { web3SetHttpProvider } from '../handlers/web3_ethers';
 
 // -- Constants ------------------------------------------------------------- //
 const SETTINGS_UPDATE_NETWORK = 'settings/SETTINGS_UPDATE_NETWORK';
@@ -56,18 +56,23 @@ export const settingsUpdateAccountAddress = (accountAddress, accountType) => (
 
 export const settingsUpdateNetwork = network => dispatch => {
   const chainId = getChainIdFromNetwork(network);
-  web3SetHttpProvider(`https://${network}.infura.io/`);
-  dispatch({ type: SETTINGS_UPDATE_NETWORK, payload: { network, chainId } });
+  web3SetHttpProvider(network);
+  dispatch({
+    payload: { chainId, network },
+    type: SETTINGS_UPDATE_NETWORK,
+  });
 };
 
 export const settingsUpdateChainId = chainId => dispatch => {
   const network = getNetworkFromChainId(chainId);
-  web3SetHttpProvider(`https://${network}.infura.io/`);
-  dispatch({ type: SETTINGS_UPDATE_CHAIN_ID, payload: { network, chainId } });
+  web3SetHttpProvider(network);
+  dispatch({
+    payload: { chainId, network },
+    type: SETTINGS_UPDATE_CHAIN_ID,
+  });
 };
 
 export const settingsChangeLanguage = language => dispatch => {
-  //TODO: needs to trigger render after change
   updateLanguage(language);
   saveLanguage(language).then( () => {
     dispatch({
