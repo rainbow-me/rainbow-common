@@ -56,7 +56,6 @@ const SEND_UPDATE_HAS_PENDING_TRANSACTION =
 const SEND_CLEAR_FIELDS = 'send/SEND_CLEAR_FIELDS';
 
 function getBalanceAmount(assets, gasPrice, selected) {
-  console.log('get balance amount');
   let amount = '';
 
   if (selected.symbol === 'ETH') {
@@ -113,7 +112,6 @@ export const sendModalInit = (options = {}) => (dispatch, getState) => {
 };
 
 export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
-  console.log('send update gas price');
   const {
     selected,
     address,
@@ -138,7 +136,6 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
     amount: assetAmount,
   })
     .then(gasLimit => {
-      console.log('estimated gas limit');
       const { prices } = getState().prices;
       const { assets } = getState().assets;
       const { nativeCurrency } = getState().settings;
@@ -195,7 +192,6 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
 
 export const sendTransaction = (transactionDetails, signAndSendTransactionCb) => (dispatch, getState) => new Promise((resolve, reject) => {
   dispatch({ type: SEND_TRANSACTION_REQUEST });
-  console.log('sendTransaction', transactionDetails);
   const {
     address,
     recipient,
@@ -215,11 +211,8 @@ export const sendTransaction = (transactionDetails, signAndSendTransactionCb) =>
     nonce: null,
     to: recipient,
   };
-  console.log('calling create signalbe txn');
   return createSignableTransaction(txDetails)
     .then(signableTransactionDetails => {
-      console.log('created signable txn');
-      console.log('sign and send cb');
       signAndSendTransactionCb({
         accountType,
         transaction: signableTransactionDetails,
@@ -352,7 +345,6 @@ export const sendUpdateNativeAmount = nativeAmount => (dispatch, getState) => {
 };
 
 export const sendUpdateSelected = (value) => (dispatch, getState) => {
-  console.log('send updated selected', value);
   if (get(value, 'isNft')) {
     dispatch({ type: SEND_UPDATE_NFT_SELECTED, payload: {
       selected: {

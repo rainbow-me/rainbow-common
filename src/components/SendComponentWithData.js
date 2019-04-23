@@ -109,7 +109,6 @@ export const withSendComponentWithData = (SendComponent, options) => {
     }
 
     async componentDidUpdate(prevProps) {
-      console.log('Send Component did update');
       const { assetAmount, recipient, selected, sendUpdateGasPrice } = this.props;
 
       if (recipient !== prevProps.recipient) {
@@ -121,7 +120,6 @@ export const withSendComponentWithData = (SendComponent, options) => {
         if ((selected.symbol !== prevProps.selected.symbol) ||
            (recipient !== prevProps.recipient) ||
            (assetAmount !== prevProps.assetAmount)) {
-          console.log('send update gas price');
           sendUpdateGasPrice();
         }
       }
@@ -152,7 +150,6 @@ export const withSendComponentWithData = (SendComponent, options) => {
     };
 
     onSubmit = async (event) => {
-      console.log('SendComponent onSubmit');
       if (event && typeof event.preventDefault === 'function') {
         event.preventDefault();
       }
