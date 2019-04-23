@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/)
 * ENS support
 
 ### Changed
+* Update WalletConnect support
 * Upped limit for OpenSea assets
 * Fix for initially estimating gas
 
