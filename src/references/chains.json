@@ -3,7 +3,7 @@
     "name": "Ethereum Mainnet",
     "short_name": "eth",
     "chain": "ETH",
-    "network": "Mainnet",
+    "network": "mainnet",
     "chain_id": 1,
     "network_id": 1
   },

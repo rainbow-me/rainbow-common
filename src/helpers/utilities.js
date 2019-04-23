@@ -3,6 +3,7 @@ import {
   convertNumberToString,
   add,
 } from './bignumber';
+import { find, get } from 'lodash';
 import chains from '../references/chains.json'
 
 /**
@@ -203,23 +204,15 @@ export const calcTxFee = (gasPrices, gasPriceOption, nativeCurrency) => {
  * @param  {Number} chainId
  */
 export const getNetworkFromChainId = (chainId) => {
-  let result = 'mainnet';
-  const matches = chains.filter(chain => chain.chain_id === chainId);
-  if (matches && matches.length) {
-    result = matches[0].network;
-  }
-  return result;
+  const networkData = find(chains, ['chain_id', chainId]);
+  return get(networkData, 'network', 'mainnet');
 }
 
 /**
  * @desc get chainId from network string
  * @param  {String} network
  */
-export const getChainIdFromNetwork = (chainId) => {
-  let result = 1;
-  const matches = chains.filter(chain => chain.network === network);
-  if (matches && matches.length) {
-    result = matches[0].chain_id;
-  }
-  return result;
+export const getChainIdFromNetwork = (network) => {
+  const chainData = find(chains, ['network', network]);
+  return get(chainData, 'chain_id', 1);
 }

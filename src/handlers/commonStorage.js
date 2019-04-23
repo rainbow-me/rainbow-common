@@ -232,10 +232,7 @@ export const saveNativeCurrency = async nativeCurrency => {
  */
 export const getAllValidWalletConnectSessions = async () => {
   const allSessions = await getAllWalletConnectSessions();
-  const validSessions = pickBy(allSessions, (value, key) => {
-    return value.connected
-  });
-  return validSessions;
+  return pickBy(allSessions, value => value.connected);
 };
 
 /**
