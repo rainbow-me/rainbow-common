@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { findIndex, slice } from 'lodash';
+import { REACT_APP_TXNS_API } from 'react-native-dotenv';
 import {
   parseAccountAssets,
   parseAccountTransactions,
@@ -57,7 +58,20 @@ export const apiGetHistoricalPrices = (
 };
 
 /**
- * Configuration for Dapple api
+ * Configuration for transactions API
+ * @type axios instance
+ */
+const transactionsApi = axios.create({
+  baseURL: REACT_APP_TXNS_API,
+  timeout: 30000, // 30 secs
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  },
+});
+
+/**
+ * Configuration for Dapple API
  * @type axios instance
  */
 const api = axios.create({
@@ -91,15 +105,9 @@ export const apiGetAccountBalances = async (
 /**
  * @desc get transaction data
  * @param  {String}   [address = '']
- * @param  {String}   [network = 'mainnet']
- * @param  {Number}   [page = 1]
  * @return {Promise}
  */
-export const apiGetTransactionData = (
-  address = '',
-  network = 'mainnet',
-  page = 1,
-) => api.get(`/get_transactions/${network}/${address}/${page}`);
+export const apiGetTransactionData = (address, network, limit = 200) => transactionsApi.get(`/transactions?address=${address}&limit=${limit}`);
 
 /**
  * @desc get account transactions
@@ -115,7 +123,7 @@ export const apiGetAccountTransactions = async (
   page = 1,
 ) => {
   try {
-    let { data } = await apiGetTransactionData(address, network, page);
+    let { data } = await apiGetTransactionData(address, network);
     let { transactions, pages } = await parseAccountTransactions(data, assets, address, network);
     if (transactions.length && lastTxHash) {
       const lastTxnHashIndex = findIndex(transactions, (txn) => { return txn.hash === lastTxHash });
