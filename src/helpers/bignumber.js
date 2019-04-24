@@ -1,3 +1,4 @@
+import { get } from 'lodash';
 import BigNumber from 'bignumber.js';
 import ethUnits from '../references/ethereum-units.json';
 import nativeCurrencies from '../references/native-currencies.json';
@@ -173,6 +174,20 @@ export const convertAmountFromBigNumber = value =>
  * @return {String}
  */
 export const handleSignificantDecimals = (value, decimals, buffer) => {
+  const result = significantDecimals(value, decimals, buffer);
+  return BigNumber(`${result}`).dp() <= 2
+    ? BigNumber(`${result}`).toFormat(2)
+    : BigNumber(`${result}`).toFormat();
+};
+
+/**
+ * @desc handle signficant decimals
+ * @param  {String}   value
+ * @param  {Number}   decimals
+ * @param  {Number}   buffer
+ * @return {String}
+ */
+export const significantDecimals = (value, decimals, buffer) => {
   if (
     !BigNumber(`${decimals}`).isInteger() ||
     (buffer && !BigNumber(`${buffer}`).isInteger())
@@ -192,56 +207,52 @@ export const handleSignificantDecimals = (value, decimals, buffer) => {
   }
   let result = BigNumber(`${value}`).toFixed(decimals);
   result = BigNumber(`${result}`).toString();
-  return BigNumber(`${result}`).dp() <= 2
-    ? BigNumber(`${result}`).toFormat(2)
-    : BigNumber(`${result}`).toFormat();
+  return result;
+};
+
+/**
+ * @desc convert from amount value to unformatted display
+ * @param  {BigNumber}  value
+ * @param  {String}     selected
+ * @return {String}
+ */
+export const convertAmountToUnformattedDisplay = (value, selected) => {
+  if (!value) return '';
+  value = convertAmountFromBigNumber(value);
+  const nativeSelected = nativeCurrencies[selected];
+  const decimals = nativeSelected.decimals;
+  return significantDecimals(value, decimals);
 };
 
 /**
  * @desc convert from amount value to display formatted string
  * @param  {BigNumber}  value
- * @param  {Object}     nativePrices
  * @param  {Object}     asset
  * @param  {Number}     buffer
  * @return {String}
  */
-export const convertAmountToDisplay = (value, nativePrices, asset, buffer) => {
+export const convertAmountToDisplay = (value, asset, buffer) => {
   value = convertAmountFromBigNumber(value);
-  if (!nativePrices && !asset) {
-    const decimals = 2;
-    const display = handleSignificantDecimals(value, decimals, buffer);
-    return `${display}%`;
-  } else if (!nativePrices && asset) {
+  if (asset) {
     const decimals = asset.decimals || 18;
     const display = handleSignificantDecimals(value, decimals, buffer);
     return `${display} ${asset.symbol}`;
-  } else if (nativePrices) {
-    const decimals = nativePrices.selected.decimals;
+  } else {
+    const decimals = 2;
     const display = handleSignificantDecimals(value, decimals, buffer);
-    if (nativePrices.selected.alignment === 'left') {
-      return `${nativePrices.selected.symbol}${display}`;
-    }
-    return `${display} ${nativePrices.selected.currency}`;
+    return `${display}%`;
   }
-  return value;
 };
 
 /**
- * @desc convert from amount value to display formatted string for specific currency
+ * @desc convert from amount value to display formatted string
  * @param  {BigNumber}  value
- * @param  {Object}     nativePrices
- * @param  {Object}     asset
+ * @param  {String}     nativeCurrency
  * @return {String}
  */
-export const convertAmountToDisplaySpecific = (
-  value,
-  nativePrices,
-  selected,
-  buffer,
-) => {
-  if (!nativePrices) return null;
+export const simpleConvertAmountToDisplay = (value, nativeCurrency, buffer) => {
   value = convertAmountFromBigNumber(value);
-  const nativeSelected = nativeCurrencies[selected];
+  const nativeSelected = nativeCurrencies[nativeCurrency];
   const decimals = nativeSelected.decimals;
   const display = handleSignificantDecimals(value, decimals, buffer);
   if (nativeSelected.alignment === 'left') {
@@ -250,23 +261,37 @@ export const convertAmountToDisplaySpecific = (
   return `${display} ${nativeSelected.currency}`;
 };
 
+
 /**
  * @desc convert from asset amount value to display formatted string for specific currency
  * @param  {BigNumber}  value
- * @param  {Object}     nativePrices
+ * @param  {Object}     asset
+ * @return {String}
+ */
+export const convertAssetAmountToDisplay = (
+  value,
+  selected,
+  buffer,
+) => {
+  if (!value) return '';
+  const nativeSelected = nativeCurrencies[selected];
+  const decimals = nativeSelected.decimals;
+  return handleSignificantDecimals(value, decimals, buffer);
+};
+
+/**
+ * @desc convert from asset amount value to display formatted string for specific currency
+ * @param  {BigNumber}  value
  * @param  {Object}     asset
  * @return {String}
  */
 export const convertAssetAmountToDisplaySpecific = (
   value,
-  nativePrices,
   selected,
   buffer,
 ) => {
-  if (!nativePrices) return null;
   const nativeSelected = nativeCurrencies[selected];
-  const decimals = nativeSelected.decimals;
-  const display = handleSignificantDecimals(value, decimals, buffer);
+  const display = convertAssetAmountToDisplay(value, selected, buffer);
   if (nativeSelected.alignment === 'left') {
     return `${nativeSelected.symbol}${display}`;
   }
@@ -310,12 +335,24 @@ export const convertAssetAmountFromBigNumber = (value, decimals) => {
  * @param  {String}   value
  * @param  {Object}   asset
  * @param  {Object}   nativePrices
+ * @param  {String}   nativeCurrency
  * @return {String}
  */
-export const convertAssetAmountToNativeValue = (value, asset, nativePrices) => {
-  const nativeSelected = nativePrices.selected.currency;
+export const convertAssetAmountToNativeValue = (value, asset, nativePrices, nativeCurrency) => {
+  return convertAssetAmountToSpecifiedNativeValue(value, asset, nativePrices, nativeCurrency);
+};
+
+/**
+ * @desc convert from asset amount units to native price value units
+ * @param  {String}   value
+ * @param  {Object}   asset
+ * @param  {Object}   nativePrices
+ * @param  {String}   nativeSelected
+ * @return {String}
+ */
+export const convertAssetAmountToSpecifiedNativeValue = (value, asset, nativePrices, nativeSelected = 'USD') => {
   const assetPriceUnit = convertAmountFromBigNumber(
-    nativePrices[nativeSelected][asset.symbol].price.amount,
+    get(nativePrices, `[${nativeSelected}][${asset.symbol}].price.amount`, 0)
   );
   const assetNativePrice = BigNumber(value)
     .times(BigNumber(assetPriceUnit))
@@ -334,10 +371,10 @@ export const convertAssetAmountFromNativeValue = (
   value,
   asset,
   nativePrices,
+  nativeCurrency,
 ) => {
-  const nativeSelected = nativePrices.selected.currency;
   const assetPriceUnit = convertAmountFromBigNumber(
-    nativePrices[nativeSelected][asset.symbol].price.amount,
+    get(nativePrices, `[${nativeCurrency}][${asset.symbol}].price.amount`, 0),
   );
   const assetAmountUnit = BigNumber(value)
     .dividedBy(BigNumber(assetPriceUnit))
@@ -356,39 +393,16 @@ export const convertAssetAmountToNativeAmount = (
   value,
   asset,
   nativePrices,
+  nativeCurrency,
 ) => {
-  const nativeSelected = nativePrices.selected.currency;
   const _value = convertAmountFromBigNumber(`${value}`);
   const assetPriceUnit = convertAmountFromBigNumber(
-    nativePrices[nativeSelected][asset.symbol].price.amount,
+    get(nativePrices, `[${nativeCurrency}][${asset.symbol}].price.amount`, 0),
   );
   const assetNativePrice = BigNumber(_value)
     .times(BigNumber(assetPriceUnit))
     .toString();
   return convertAmountToBigNumber(assetNativePrice);
-};
-
-/**
- * @desc convert to asset BigNumber amount from native price BigNumber amount
- * @param  {BigNumber}   value
- * @param  {Object}   asset
- * @param  {Object}   nativePrices
- * @return {BigNumber}
- */
-export const convertAssetAmountFromNativeAmount = (
-  value,
-  asset,
-  nativePrices,
-) => {
-  const nativeSelected = nativePrices.selected.currency;
-  const _value = convertAmountFromBigNumber(`${value}`);
-  const assetPriceUnit = convertAmountFromBigNumber(
-    nativePrices[nativeSelected][asset.symbol].price.amount,
-  );
-  const assetAmountUnit = BigNumber(_value)
-    .dividedBy(BigNumber(assetPriceUnit))
-    .toString();
-  return convertAmountToBigNumber(assetAmountUnit);
 };
 
 /**
@@ -428,27 +442,3 @@ export const formatInputDecimals = (inputOne, inputTwo) => {
     .replace(/,/g, '');
   return result;
 };
-
-/**
- * @desc checks if asset has a high market value
- * @param  {Object}   asset
- * @return {Boolean}
- */
-export const hasHighMarketValue = asset =>
-  asset.native &&
-  greaterThan(
-    convertAmountFromBigNumber(asset.native.balance.amount),
-    asset.native.selected.assetLimit,
-  );
-
-/**
- * @desc checks if asset has a low market value
- * @param  {Object}   asset
- * @return {Boolean}
- */
-export const hasLowMarketValue = asset =>
-  asset.native &&
-  smallerThan(
-    convertAmountFromBigNumber(asset.native.balance.amount),
-    asset.native.selected.assetLimit,
-  );

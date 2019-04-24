@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { get } from 'lodash';
+import { compose } from 'recompact';
+import { endsWith, get } from 'lodash';
 import lang from '../languages';
+import { withAccountAssets } from '../hoc';
 import {
   sendModalInit,
   sendUpdateGasPrice,
@@ -27,11 +29,14 @@ import {
   transactionData,
 } from '../helpers/utilities';
 
-const reduxProps = ({ send, account }) => ({
+const mapStateToProps = ({ send, settings }) => ({
+  address: settings.accountAddress,
   fetching: send.fetching,
   recipient: send.recipient,
   nativeAmount: send.nativeAmount,
   assetAmount: send.assetAmount,
+  isSufficientGas: send.isSufficientGas,
+  isSufficientBalance: send.isSufficientBalance,
   txHash: send.txHash,
   address: send.address,
   selected: send.selected,
@@ -40,11 +45,9 @@ const reduxProps = ({ send, account }) => ({
   gasLimit: send.gasLimit,
   gasPriceOption: send.gasPriceOption,
   confirm: send.confirm,
-  accountInfo: account.accountInfo,
-  accountType: account.accountType,
-  network: account.network,
-  nativeCurrency: account.nativeCurrency,
-  prices: account.prices,
+  accountType: settings.accountType,
+  network: settings.network,
+  nativeCurrency: settings.nativeCurrency,
 });
 
 /**
@@ -73,6 +76,8 @@ export const withSendComponentWithData = (SendComponent, options) => {
       recipient: PropTypes.string.isRequired,
       nativeAmount: PropTypes.string.isRequired,
       assetAmount: PropTypes.string.isRequired,
+      isSufficientGas: PropTypes.bool.isRequired,
+      isSufficientBalance: PropTypes.bool.isRequired,
       txHash: PropTypes.string.isRequired,
       selected: PropTypes.object.isRequired,
       gasPrice: PropTypes.object.isRequired,
@@ -80,11 +85,10 @@ export const withSendComponentWithData = (SendComponent, options) => {
       gasLimit: PropTypes.number.isRequired,
       gasPriceOption: PropTypes.string.isRequired,
       confirm: PropTypes.bool.isRequired,
-      accountInfo: PropTypes.object.isRequired,
+      assets: PropTypes.array.isRequired,
       accountType: PropTypes.string.isRequired,
       network: PropTypes.string.isRequired,
       nativeCurrency: PropTypes.string.isRequired,
-      prices: PropTypes.object.isRequired,
     };
 
     constructor(props) {
@@ -95,24 +99,20 @@ export const withSendComponentWithData = (SendComponent, options) => {
         showQRCodeReader: false,
       };
 
-      // Allow sendTransactionCallback to be passed in directly for backwards compatibility.
-      if (typeof options === 'function') {
-        this.defaultAsset = 'ETH';
-        this.sendTransactionCallback = options;
-      } else {
-        this.defaultAsset = options.defaultAsset;
-        this.sendTransactionCallback = options.sendTransactionCallback || function noop() {};
-      }
+      this.defaultAsset = options.defaultAsset;
+      this.gasFormat = options.gasFormat || 'long';
+      this.sendTransactionCallback = options.sendTransactionCallback || function noop() {};
     }
 
     componentDidMount() {
-      this.props.sendModalInit({ defaultAsset: this.defaultAsset });
+      this.props.sendModalInit({ defaultAsset: this.defaultAsset, gasFormat: this.gasFormat });
     }
 
-    componentDidUpdate(prevProps) {
+    async componentDidUpdate(prevProps) {
       const { assetAmount, recipient, selected, sendUpdateGasPrice } = this.props;
 
-      if (recipient.length >= 42) {
+      // TODO should check if valid address
+      if (recipient.length >= 42 || endsWith(recipient, '.eth')) {
         if (selected.symbol !== prevProps.selected.symbol) {
           sendUpdateGasPrice();
         } else if (recipient !== prevProps.recipient) {
@@ -123,20 +123,23 @@ export const withSendComponentWithData = (SendComponent, options) => {
       }
 
       if (recipient !== prevProps.recipient) {
-        this.setState({ isValidAddress: isValidAddress(recipient) });
+        const validAddress = await isValidAddress(recipient);
+        this.setState({ isValidAddress: validAddress });
       }
     }
 
-    onAddressInputFocus = () => {
+    onAddressInputFocus = async () => {
       const { recipient } = this.props;
 
-      this.setState({ isValidAddress: isValidAddress(recipient) });
+      const validAddress = await isValidAddress(recipient);
+      this.setState({ isValidAddress: validAddress });
     };
 
-    onAddressInputBlur = () => {
+    onAddressInputBlur = async () => {
       const { recipient } = this.props;
 
-      this.setState({ isValidAddress: isValidAddress(recipient) });
+      const validAddress = await isValidAddress(recipient);
+      this.setState({ isValidAddress: validAddress });
     };
 
     onGoBack = () => this.props.sendToggleConfirmationView(false);
@@ -149,7 +152,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
       this.props.sendModalInit({ defaultAsset: this.defaultAsset });
     };
 
-    onSubmit = (event) => {
+    onSubmit = async (event) => {
       if (event && typeof event.preventDefault === 'function') {
         event.preventDefault();
       }
@@ -164,7 +167,8 @@ export const withSendComponentWithData = (SendComponent, options) => {
       }
 
       if (!this.props.confirm) {
-        if (!isValidAddress(this.props.recipient)) {
+        const isAddressValid = await isValidAddress(this.props.recipient);
+        if (!isAddressValid) {
           this.props.notificationShow(
             lang.t('notification.error.invalid_address'),
             true,
@@ -173,7 +177,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
           return;
         } else if (this.props.selected.symbol === 'ETH') {
           const { requestedAmount, balance, amountWithFees } = transactionData(
-            this.props.accountInfo,
+            this.props.assets,
             this.props.assetAmount,
             this.props.gasPrice,
           );
@@ -195,7 +199,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
           }
         } else {
           const { requestedAmount, balance, txFee } = transactionData(
-            this.props.accountInfo,
+            this.props.assets,
             this.props.assetAmount,
             this.props.gasPrice,
           );
@@ -220,8 +224,10 @@ export const withSendComponentWithData = (SendComponent, options) => {
           }
         }
 
-        this.props.sendTransaction({
-          address: this.props.accountInfo.address,
+        this.props.sendToggleConfirmationView(true);
+
+        return this.props.sendTransaction({
+          address: this.props.address,
           recipient: this.props.recipient,
           amount: this.props.assetAmount,
           asset: this.props.selected,
@@ -230,7 +236,6 @@ export const withSendComponentWithData = (SendComponent, options) => {
         }, this.sendTransactionCallback);
       }
 
-      this.props.sendToggleConfirmationView(true);
     };
 
     updateGasPrice = gasPrice => {
@@ -250,11 +255,14 @@ export const withSendComponentWithData = (SendComponent, options) => {
     toggleQRCodeReader = () =>
       this.setState({ showQRCodeReader: !this.state.showQRCodeReader });
 
-    onQRCodeValidate = rawData => {
+    onQRCodeValidate = async (rawData) => {
       const data = rawData.match(/0x\w{40}/g)
         ? rawData.match(/0x\w{40}/g)[0]
         : null;
-      const result = data ? isValidAddress(data) : false;
+      let result = false;
+      if (data) {
+        result = await isValidAddress(data);
+      }
       const onError = () =>
         this.props.notificationShow(
           lang.t('notification.error.invalid_address_scanned'),
@@ -297,9 +305,8 @@ export const withSendComponentWithData = (SendComponent, options) => {
     };
   }
 
-  return connect(
-    reduxProps,
-    {
+  return compose(
+    connect(mapStateToProps, {
       sendModalInit,
       sendUpdateGasPrice,
       sendTransaction,
@@ -311,6 +318,7 @@ export const withSendComponentWithData = (SendComponent, options) => {
       sendMaxBalance,
       sendToggleConfirmationView,
       notificationShow,
-    },
+    }),
+    withAccountAssets,
   )(SendComponentWithData);
 };
