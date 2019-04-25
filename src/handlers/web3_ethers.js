@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { replace } from 'lodash';
+import { get, replace } from 'lodash';
 import { REACT_APP_INFURA_PROJECT_ID } from 'react-native-dotenv';
 import { isValidAddress } from '../helpers/validators';
 import { getDataString, removeHexPrefix } from '../helpers/utilities';
@@ -103,7 +103,6 @@ export const getTransactionCount = address =>
  * @param  {Object} transaction { from, to, data, value, gasPrice, gasLimit }
  * @return {Object}
  */
-// TODO tx details from / to better start with 0x if hex string
 export const getTxDetails = async (transaction) => {
   const from = transaction.from;
   const to = transaction.to;
@@ -125,26 +124,45 @@ export const getTxDetails = async (transaction) => {
   return tx;
 };
 
+export const resolveNameOrAddress = async (nameOrAddress) => {
+  if (!isHexString(nameOrAddress)) {
+    return await web3Provider.resolveName(nameOrAddress);
+  }
+  return nameOrAddress;
+};
+
+/**
+ * @desc get transfer nft transaction
+ * @param  {Object}  transaction { asset, from, to, gasPrice }
+ * @return {Object}
+ */
+export const getTransferNftTransaction = async (transaction) => {
+  let recipient = await resolveNameOrAddress(transaction.to);
+  let from = transaction.from;
+  const contractAddress = get(transaction, 'asset.asset_contract.address');
+  const data = getDataForNftTransfer(from, recipient, transaction.asset);
+  return {
+    from,
+    to: contractAddress,
+    data,
+    gasPrice: transaction.gasPrice,
+    gasLimit: transaction.gasLimit,
+  };
+};
+
 /**
  * @desc get transfer token transaction
  * @param  {Object}  transaction { asset, from, to, amount, gasPrice }
  * @return {Object}
  */
 export const getTransferTokenTransaction = async (transaction) => {
-  const transferMethodHash = smartContractMethods.token_transfer.hash;
-  const value = convertStringToHex(
-    convertAmountToAssetAmount(transaction.amount, transaction.asset.decimals),
-  );
-  let recipient = transaction.to;
-  if (!isHexString(transaction.to)) {
-    recipient = await web3Provider.resolveName(transaction.to);
-  }
-  recipient = removeHexPrefix(recipient);
-  const dataString = getDataString(transferMethodHash, [recipient, value]);
+  const value = convertAmountToAssetAmount(transaction.amount, transaction.asset.decimals);
+  let recipient = await resolveNameOrAddress(transaction.to);
+  const data = getDataForTokenTransfer(value, recipient);
   return {
     from: transaction.from,
     to: transaction.asset.address,
-    data: dataString,
+    data,
     gasPrice: transaction.gasPrice,
     gasLimit: transaction.gasLimit,
   };
@@ -155,26 +173,53 @@ export const getTransferTokenTransaction = async (transaction) => {
  * @param {Object} transaction { asset, from, to, amount, gasPrice }
  * @return {Promise}
  */
-export const createSignableTransaction = transaction =>
-  new Promise((resolve, reject) => {
-    if (transaction.asset.symbol !== 'ETH') {
-      getTransferTokenTransaction(transaction)
-      .then(result => {
-        getTxDetails(result)
-          .then(txDetails => resolve(txDetails))
-          .catch(error => reject(error));
-      }).catch(error => reject(error));
-    } else {
-      getTxDetails(transaction)
-        .then(txDetails => resolve(txDetails))
-        .catch(error => reject(error));
-    }
-  });
+export const createSignableTransaction = async (transaction) => {
+  if (get(transaction, 'asset.symbol') === 'ETH') {
+    return await getTxDetails(transaction);
+  }
+  const isNft = get(transaction, 'asset.isNft', false);
+  const result = isNft ? await getTransferNftTransaction(transaction) :
+    await getTransferTokenTransaction(transaction);
+  return await getTxDetails(result)
+};
 
-const estimateAssetBalancePortion = (assetBalance, decimals) => {
-  const portion = multiply(convertAmountFromBigNumber(assetBalance), 0.1);
-  const trimmed = handleSignificantDecimals(portion, decimals);
-  return convertAmountToAssetAmount(trimmed, decimals);
+const estimateAssetBalancePortion = (asset) => {
+  if (!asset.isNft) {
+    const assetBalance = get(asset, 'balance.amount');
+    const decimals = get(asset, 'decimals');
+    const portion = multiply(convertAmountFromBigNumber(assetBalance), 0.1);
+    const trimmed = handleSignificantDecimals(portion, decimals);
+    return convertAmountToAssetAmount(trimmed, decimals);
+  }
+  return '0';
+};
+
+export const getDataForTokenTransfer = (value, to) => {
+  const transferMethodHash = smartContractMethods.token_transfer.hash;
+  const data = getDataString(transferMethodHash, [
+    removeHexPrefix(to),
+    convertStringToHex(value),
+  ]);
+  return data;
+};
+
+export const getDataForNftTransfer = (from, to, asset) => {
+  const nftVersion = get(asset, 'asset_contract.nft_version');
+  if (nftVersion === "3.0") {
+    const transferMethodHash = smartContractMethods.nft_transfer_from.hash;
+    const data = getDataString(transferMethodHash, [
+      removeHexPrefix(from),
+      removeHexPrefix(to),
+      convertStringToHex(asset.id)
+    ]);
+    return data;
+  }
+  const transferMethodHash = smartContractMethods.nft_transfer.hash;
+  const data = getDataString(transferMethodHash, [
+    removeHexPrefix(to),
+    convertStringToHex(asset.id)
+  ]);
+  return data;
 };
 
 /**
@@ -193,24 +238,19 @@ export const estimateGasLimit = async ({
   let _amount =
     amount && Number(amount)
       ? convertAmountToAssetAmount(amount, asset.decimals)
-      : estimateAssetBalancePortion(asset.balance.amount, asset.decimals);
+      : estimateAssetBalancePortion(asset);
   let value = _amount.toString();
-  let _recipient = recipient;
-  if (!isHexString(recipient)) {
-    _recipient = await web3Provider.resolveName(recipient);
-  }
-  _recipient =
-    _recipient && await isValidAddress(_recipient)
+  let _recipient = await resolveNameOrAddress(recipient);
+  _recipient = _recipient
       ? _recipient
       : '0x737e583620f4ac1842d4e354789ca0c5e0651fbb';
   let estimateGasData = { from: address, to: _recipient, data, value };
-  if (asset.symbol !== 'ETH') {
-    const transferMethodHash = smartContractMethods.token_transfer.hash;
-    value = convertStringToHex(_amount);
-    data = getDataString(transferMethodHash, [
-      removeHexPrefix(_recipient),
-      value,
-    ]);
+  if (asset.isNft) {
+    const contractAddress = get(asset, 'asset_contract.address');
+    const data = getDataForNftTransfer(address, _recipient, asset);
+    estimateGasData = { from: address, to: contractAddress, data };
+  } else if (asset.symbol !== 'ETH') {
+    const data = getDataForTokenTransfer(_amount, _recipient);
     estimateGasData = { from: address, to: asset.address, data, value: '0x0' };
   }
   return await estimateGas(estimateGasData);

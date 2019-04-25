@@ -312,6 +312,9 @@ export const parseAccountUniqueTokens = data =>
     ]),
     background: background_color ? `#${background_color}` : null,
     id: token_id,
+    isNft: true,
+    isSendable: (asset_contract.nft_version === "1.0"
+                 || asset_contract.nft_version === "3.0"),
     lastPrice: (
       asset.last_sale
       ? Number(convertAmountFromBigNumber(asset.last_sale.total_price))

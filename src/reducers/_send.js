@@ -49,6 +49,7 @@ const SEND_UPDATE_NATIVE_AMOUNT = 'send/SEND_UPDATE_NATIVE_AMOUNT';
 const SEND_UPDATE_RECIPIENT = 'send/SEND_UPDATE_RECIPIENT';
 const SEND_UPDATE_ASSET_AMOUNT = 'send/SEND_UPDATE_ASSET_AMOUNT';
 const SEND_UPDATE_SELECTED = 'send/SEND_UPDATE_SELECTED';
+const SEND_UPDATE_NFT_SELECTED = 'send/SEND_UPDATE_NFT_SELECTED';
 const SEND_UPDATE_HAS_PENDING_TRANSACTION =
   'send/SEND_UPDATE_HAS_PENDING_TRANSACTION';
 
@@ -343,19 +344,27 @@ export const sendUpdateNativeAmount = nativeAmount => (dispatch, getState) => {
   });
 };
 
-export const sendUpdateSelected = value => (dispatch, getState) => {
-  const state = getState();
-  const assetAmount = get(state, 'send.assetAmount', 0);
-  const assets = get(state, 'assets.assets', []);
-  const nativeCurrency = get(state, 'settings.nativeCurrency', '');
-  const prices = get(state, 'prices.prices', {});
-  const selected = assets.filter(asset => asset.symbol === value)[0] || {};
+export const sendUpdateSelected = (value) => (dispatch, getState) => {
+  if (get(value, 'isNft')) {
+    dispatch({ type: SEND_UPDATE_NFT_SELECTED, payload: {
+      selected: {
+        ...value,
+        symbol: value.asset_contract.name,
+      },
+    }});
+  } else {
+    const state = getState();
+    const assetAmount = get(state, 'send.assetAmount', 0);
+    const assets = get(state, 'assets.assets', []);
+    const nativeCurrency = get(state, 'settings.nativeCurrency', '');
+    const prices = get(state, 'prices.prices', {});
+    const selected = assets.filter(asset => asset.symbol === value)[0] || {};
 
-  dispatch({ type: SEND_UPDATE_SELECTED, payload: selected });
-  dispatch(sendUpdateGasPrice());
-
-  if (prices[nativeCurrency] && prices[nativeCurrency][selected.symbol]) {
-    dispatch(sendUpdateAssetAmount(assetAmount));
+    dispatch({ type: SEND_UPDATE_SELECTED, payload: selected });
+    //TODO this may be unnecessary: dispatch(sendUpdateGasPrice());
+    if (prices[nativeCurrency] && prices[nativeCurrency][selected.symbol]) {
+      dispatch(sendUpdateAssetAmount(assetAmount));
+    }
   }
 };
 
@@ -474,6 +483,13 @@ export default (state = INITIAL_STATE, action) => {
       };
     case SEND_UPDATE_SELECTED:
       return { ...state, selected: action.payload };
+    case SEND_UPDATE_NFT_SELECTED:
+      return {
+        ...state,
+        assetAmount: '1',
+        selected: action.payload.selected,
+        isSufficientBalance: true,
+      };
     case SEND_CLEAR_FIELDS:
       return { ...state, ...INITIAL_STATE };
     default:
