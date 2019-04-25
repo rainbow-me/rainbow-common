@@ -243,10 +243,11 @@ export const parseAccountAssets = (data = null, address = '') => {
           ? assetData.contract.name
           : assetData.contract.symbol || 'Unknown Token';
       const asset = {
-        name: name,
-        symbol: assetData.contract.symbol || '———',
         address: assetData.contract.address || null,
         decimals: convertStringToNumber(assetData.contract.decimals),
+        name: name,
+        symbol: assetData.contract.symbol || '———',
+        uniqueId: assetData.contract.address || name,
       };
       const assetBalance = convertAssetAmountToBigNumber(
         assetData.balance,
@@ -314,10 +315,12 @@ export const parseAccountUniqueTokens = data =>
     isNft: true,
     isSendable: (asset_contract.nft_version === "1.0"
                  || asset_contract.nft_version === "3.0"),
-    lastPrice:
+    lastPrice: (
       asset.last_sale
       ? Number(convertAmountFromBigNumber(asset.last_sale.total_price))
-      : null,
+      : null
+    ),
+    uniqueId: `${get(asset_contract, 'address')}_${token_id}`,
   }));
 
 const ethFeeAsset = {
