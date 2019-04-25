@@ -5,8 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/)
 
-## [Unreleased]
+## [0.8.0](https://github.com/rainbow-me/rainbow-common/releases/tag/0.8.0)
 ### Added
+* Support for sending NFTs
 * ENS support
 
 ### Changed
@@ -14,8 +15,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/)
 * Upped limit for OpenSea assets
 * Fix for initially estimating gas
 * Hitting transactions API directly
-
-### Removed
 
 ## [0.6.44](https://github.com/rainbow-me/rainbow-common/releases/tag/0.6.44)
 ### Added
