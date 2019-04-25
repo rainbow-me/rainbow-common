@@ -3,6 +3,8 @@ import {
   convertNumberToString,
   add,
 } from './bignumber';
+import { find, get } from 'lodash';
+import chains from '../references/chains.json'
 
 /**
  * @desc debounce api request
@@ -196,3 +198,21 @@ export const calcTxFee = (gasPrices, gasPriceOption, nativeCurrency) => {
       : '';
   return `${txFeeNative}${txFee}`;
 };
+
+/**
+ * @desc get network string from chainId
+ * @param  {Number} chainId
+ */
+export const getNetworkFromChainId = (chainId) => {
+  const networkData = find(chains, ['chain_id', chainId]);
+  return get(networkData, 'network', 'mainnet');
+}
+
+/**
+ * @desc get chainId from network string
+ * @param  {String} network
+ */
+export const getChainIdFromNetwork = (network) => {
+  const chainData = find(chains, ['network', network]);
+  return get(chainData, 'chain_id', 1);
+}

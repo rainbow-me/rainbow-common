@@ -5,10 +5,12 @@ import {
   saveLanguage,
   saveNativeCurrency,
 } from '../handlers/commonStorage';
-import { web3SetHttpProvider } from '../handlers/web3';
+import { getNetworkFromChainId, getChainIdFromNetwork } from '../helpers/utilities';
+import { web3SetHttpProvider } from '../handlers/web3_ethers';
 
 // -- Constants ------------------------------------------------------------- //
 const SETTINGS_UPDATE_NETWORK = 'settings/SETTINGS_UPDATE_NETWORK';
+const SETTINGS_UPDATE_CHAIN_ID = 'settings/SETTINGS_UPDATE_CHAIN_ID';
 const SETTINGS_UPDATE_SETTINGS_ADDRESS = 'settings/SETTINGS_UPDATE_SETTINGS_ADDRESS';
 
 const SETTINGS_UPDATE_NATIVE_CURRENCY_SUCCESS = 'settings/SETTINGS_UPDATE_NATIVE_CURRENCY_SUCCESS';
@@ -53,12 +55,24 @@ export const settingsUpdateAccountAddress = (accountAddress, accountType) => (
 };
 
 export const settingsUpdateNetwork = network => dispatch => {
-  web3SetHttpProvider(`https://${network}.infura.io/`);
-  dispatch({ type: SETTINGS_UPDATE_NETWORK, payload: network });
+  const chainId = getChainIdFromNetwork(network);
+  web3SetHttpProvider(network);
+  dispatch({
+    payload: { chainId, network },
+    type: SETTINGS_UPDATE_NETWORK,
+  });
+};
+
+export const settingsUpdateChainId = chainId => dispatch => {
+  const network = getNetworkFromChainId(chainId);
+  web3SetHttpProvider(network);
+  dispatch({
+    payload: { chainId, network },
+    type: SETTINGS_UPDATE_CHAIN_ID,
+  });
 };
 
 export const settingsChangeLanguage = language => dispatch => {
-  //TODO: needs to trigger render after change
   updateLanguage(language);
   saveLanguage(language).then( () => {
     dispatch({
@@ -93,6 +107,7 @@ export const INITIAL_STATE = {
   accountAddress: '',
   language: 'en',
   nativeCurrency: 'USD',
+  chainId: 1,
   network: 'mainnet',
 };
 
@@ -116,7 +131,14 @@ export default (state = INITIAL_STATE, action) => {
     case SETTINGS_UPDATE_NETWORK:
       return {
         ...state,
-        network: action.payload,
+        network: action.payload.network,
+        chainId: action.payload.chainId
+      };
+    case SETTINGS_UPDATE_CHAIN_ID:
+      return {
+        ...state,
+        network: action.payload.network,
+        chainId: action.payload.chainId
       };
     case SETTINGS_UPDATE_LANGUAGE_SUCCESS:
       return {

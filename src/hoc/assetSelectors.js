@@ -1,4 +1,6 @@
 import {
+  filter,
+  get,
   groupBy,
   isEmpty,
   isNil,
@@ -21,13 +23,18 @@ const EMPTY_ARRAY = [];
 const assetsSelector = state => state.assets;
 const nativeCurrencySelector = state => state.nativeCurrency;
 const nativePricesSelector = state => state.prices;
+const uniqueTokensSelector = state => state.uniqueTokens;
+
+const sendableUniqueTokens = (uniqueTokens) => {
+  return {
+    sendableUniqueTokens: filter(uniqueTokens, ['isSendable', true]),
+  };
+};
 
 const sortAssetsByNativeAmount = (originalAssets, nativeCurrency, prices) => {
-  console.log('Calling SortAssets selector');
   let assetsNativePrices = originalAssets;
   let total = null;
   if (!isEmpty(originalAssets) && !isEmpty(prices)) {
-    console.log('Sorting assets with prices');
     const parsedAssets = parseAssetsNative(originalAssets, nativeCurrency, prices);
     assetsNativePrices = parsedAssets.assetsNativePrices;
     total = parsedAssets.total;
@@ -61,7 +68,6 @@ const parseAssetsNative = (
   nativeCurrency,
   nativePrices,
 ) => {
-  console.log('parse assets native');
   const nativePricesForNativeCurrency = nativePrices[nativeCurrency];
   let assetsNative = assets;
   assetsNative = map(assets, asset => {
@@ -75,14 +81,14 @@ const parseAssetsNative = (
       asset.decimals,
     );
     const balancePriceUnit = convertAmountFromBigNumber(
-      assetNativePrice.price.amount,
+      get(assetNativePrice, 'price.amount', 0),
     );
     const balanceRaw = multiply(balanceAmountUnit, balancePriceUnit);
     const balanceAmount = convertAmountToBigNumber(balanceRaw);
     let trackingAmount = balanceAmount;
     if (nativeCurrency !== 'USD') {
       const trackingPriceUnit = convertAmountFromBigNumber(
-        nativePrices['USD'][asset.symbol].price.amount,
+        get(nativePrices, `['USD'][${asset.symbol}].price.amount`, 0),
       );
       const trackingRaw = multiply(balanceAmountUnit, trackingPriceUnit);
       trackingAmount = convertAmountToBigNumber(trackingRaw);
@@ -121,4 +127,9 @@ const parseAssetsNative = (
 export const sortAssetsByNativeAmountSelector = createSelector(
   [ assetsSelector, nativeCurrencySelector, nativePricesSelector ],
   sortAssetsByNativeAmount
+);
+
+export const sendableUniqueTokensSelector = createSelector(
+  [ uniqueTokensSelector ],
+  sendableUniqueTokens
 );

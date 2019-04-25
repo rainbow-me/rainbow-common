@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { findIndex, slice } from 'lodash';
+import { REACT_APP_TXNS_API } from 'react-native-dotenv';
 import {
   parseAccountAssets,
   parseAccountTransactions,
-  parseHistoricalTransactions,
 } from './parsers';
 import { formatInputDecimals } from '../helpers/bignumber';
 import nativeCurrencies from '../references/native-currencies.json';
@@ -27,7 +27,8 @@ const cryptocompare = axios.create({
  * @return {Promise}
  */
 export const apiGetPrices = (assets = []) => {
-  const assetsQuery = JSON.stringify(assets).replace(/[[\]"]/gi, '');
+  const assetSymbols = assets.concat('ETH', 'BTC');
+  const assetsQuery = JSON.stringify(assetSymbols).replace(/[[\]"]/gi, '');
   const nativeQuery = JSON.stringify(Object.keys(nativeCurrencies)).replace(
     /[[\]"]/gi,
     '',
@@ -45,7 +46,7 @@ export const apiGetPrices = (assets = []) => {
  */
 export const apiGetHistoricalPrices = (
   assetSymbol = '',
-  timestamp = Date.now(), // TODO error: timestamp would be ms
+  timestamp,
 ) => {
   const nativeQuery = JSON.stringify(Object.keys(nativeCurrencies)).replace(
     /[[\]"]/gi,
@@ -57,11 +58,24 @@ export const apiGetHistoricalPrices = (
 };
 
 /**
- * Configuration for balance api
+ * Configuration for transactions API
+ * @type axios instance
+ */
+const transactionsApi = axios.create({
+  baseURL: REACT_APP_TXNS_API,
+  timeout: 30000, // 30 secs
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  },
+});
+
+/**
+ * Configuration for Dapple API
  * @type axios instance
  */
 const api = axios.create({
-  baseURL: 'https://indexer.balance.io',
+  baseURL: 'https://dapple.rainbow.me',
   timeout: 30000, // 30 secs
   headers: {
     'Content-Type': 'application/json',
@@ -83,7 +97,7 @@ export const apiGetAccountBalances = async (
     const { data } = await api.get(`/get_balances/${network}/${address}`);
     return parseAccountAssets(data, address);
   } catch (error) {
-    console.log('Error getting acct balances from proxy', error);
+    console.log('Error getting acct balances from dapple', error);
     throw error;
   }
 };
@@ -91,15 +105,9 @@ export const apiGetAccountBalances = async (
 /**
  * @desc get transaction data
  * @param  {String}   [address = '']
- * @param  {String}   [network = 'mainnet']
- * @param  {Number}   [page = 1]
  * @return {Promise}
  */
-export const apiGetTransactionData = (
-  address = '',
-  network = 'mainnet',
-  page = 1,
-) => api.get(`/get_transactions/${network}/${address}/${page}`);
+export const apiGetTransactionData = (address, network, limit = 200) => transactionsApi.get(`/transactions?address=${address}&limit=${limit}`);
 
 /**
  * @desc get account transactions
@@ -108,15 +116,15 @@ export const apiGetTransactionData = (
  * @return {Promise}
  */
 export const apiGetAccountTransactions = async (
+  assets,
   address = '',
   network = 'mainnet',
   lastTxHash = '',
   page = 1,
 ) => {
   try {
-    // TODO: hit api directly instead of through indexer
-    let { data } = await apiGetTransactionData(address, network, page);
-    let { transactions, pages } = await parseAccountTransactions(data, address, network);
+    let { data } = await apiGetTransactionData(address, network);
+    let { transactions, pages } = await parseAccountTransactions(data, assets, address, network);
     if (transactions.length && lastTxHash) {
       const lastTxnHashIndex = findIndex(transactions, (txn) => { return txn.hash === lastTxHash });
       if (lastTxnHashIndex > -1) {
@@ -124,8 +132,7 @@ export const apiGetAccountTransactions = async (
         pages = page;
       }
     }
-    transactions = await parseHistoricalTransactions(transactions, page);
-    const result = { data: transactions, pages };
+    const result = { data: transactions };
     return result;
   } catch (error) {
     console.log('Error getting acct transactions', error);

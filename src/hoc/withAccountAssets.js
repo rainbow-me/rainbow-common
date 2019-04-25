@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { compose, withProps } from 'recompact';
-import { sortAssetsByNativeAmountSelector } from './assetSelectors';
+import { sendableUniqueTokensSelector, sortAssetsByNativeAmountSelector } from './assetSelectors';
 
 const mapStateToProps = ({
   assets: {
@@ -20,9 +20,12 @@ const mapStateToProps = ({
   uniqueTokens,
 });
 
+const sendableUniqueTokens = (state) => sendableUniqueTokensSelector(state);
+
 const sortAssets = (state) => sortAssetsByNativeAmountSelector(state);
 
 export default Component => compose(
   connect(mapStateToProps),
   withProps(sortAssets),
+  withProps(sendableUniqueTokens),
 )(Component);

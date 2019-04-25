@@ -1,4 +1,3 @@
-import { differenceInMinutes } from 'date-fns';
 import { omit, pickBy } from 'lodash';
 
 const defaultVersion = '0.1.0';
@@ -59,16 +58,46 @@ export const removeLocal = (key = '') => {
   }
 };
 
-const getTransactionsKey = (accountAddress, network) => {
-  return `transactions-${accountAddress.toLowerCase()}-${network.toLowerCase()}`;
+const getAssetsKey = (accountAddress, network) => `assets-${accountAddress.toLowerCase()}-${network.toLowerCase()}`;
+
+const getPricesKey = (accountAddress, network) => `prices-${accountAddress.toLowerCase()}-${network.toLowerCase()}`;
+
+const getTransactionsKey = (accountAddress, network) => `transactions-${accountAddress.toLowerCase()}-${network.toLowerCase()}`;
+
+const getUniqueTokensKey = (accountAddress, network) => `uniquetokens-${accountAddress.toLowerCase()}-${network.toLowerCase()}`;
+
+/**
+ * @desc get prices
+ * @param  {String}   [address]
+ * @param  {String}   [network]
+ * @return {Object}
+ */
+export const getPrices = async (accountAddress, network) => {
+  const prices = await getLocal(getPricesKey(accountAddress, network));
+  return prices ? prices.data : {};
 };
 
-const getUniqueTokensKey = (accountAddress, network) => {
-  return `uniquetokens-${accountAddress.toLowerCase()}-${network.toLowerCase()}`;
+/**
+ * @desc save prices
+ * @param  {String}   [address]
+ * @param  {String}   [network]
+ */
+export const savePrices = async (accountAddress, prices, network) => {
+  await saveLocal(
+    getPricesKey(accountAddress, network),
+    { data: prices },
+  );
 };
 
-const getAssetsKey = (accountAddress, network) => {
-  return `assets-${accountAddress.toLowerCase()}-${network.toLowerCase()}`;
+/**
+ * @desc remove prices
+ * @param  {String}   [address]
+ * @param  {String}   [network]
+ * @return {Object}
+ */
+export const removePrices = (accountAddress, network) => {
+  const key = getPricesKey(accountAddress, network);
+  removeLocal(key);
 };
 
 /**
@@ -203,11 +232,7 @@ export const saveNativeCurrency = async nativeCurrency => {
  */
 export const getAllValidWalletConnectSessions = async () => {
   const allSessions = await getAllWalletConnectSessions();
-  const validSessions = pickBy(allSessions, (value, key) => {
-    const expiration = new Date(value.expiration);
-    return (new Date() < expiration);
-  });
-  return validSessions;
+  return pickBy(allSessions, value => value.connected);
 };
 
 /**
@@ -223,24 +248,23 @@ export const getAllWalletConnectSessions = async () => {
 
 /**
  * @desc save wallet connect session
- * @param  {String}   [sessionId]
- * @param  {String}   [uriString]
- * @param  {Number}   [expirationDateInMs]
+ * @param  {String}   [peerId]
+ * @param  {Object}   [session]
  */
-export const saveWalletConnectSession = async (sessionId, uriString, expirationDateInMs) => {
+export const saveWalletConnectSession = async (peerId, session) => {
   let allSessions = await getAllValidWalletConnectSessions();
-  allSessions[sessionId] = { uriString, expiration: expirationDateInMs };
+  allSessions[peerId] = session;
   await saveLocal('walletconnect', allSessions);
 };
 
 /**
  * @desc remove wallet connect session
- * @param  {String}   [sessionId]
+ * @param  {String}   [peerId]
  */
-export const removeWalletConnectSession = async (sessionId) => {
+export const removeWalletConnectSession = async (peerId) => {
   const allSessions = await getAllWalletConnectSessions();
-  const session = allSessions ? allSessions[sessionId] : null;
-  const resultingSessions = omit(allSessions, [sessionId]);
+  const session = allSessions ? allSessions[peerId] : null;
+  const resultingSessions = omit(allSessions, [peerId]);
   await saveLocal('walletconnect', resultingSessions);
   return session;
 };

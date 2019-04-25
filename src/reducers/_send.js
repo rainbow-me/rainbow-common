@@ -21,7 +21,7 @@ import {
 import {
   createSignableTransaction,
   estimateGasLimit,
-} from '../handlers/web3';
+} from '../handlers/web3_ethers';
 import { notificationShow } from './_notification';
 import {
   transactionsAddNewTransaction,
@@ -49,6 +49,7 @@ const SEND_UPDATE_NATIVE_AMOUNT = 'send/SEND_UPDATE_NATIVE_AMOUNT';
 const SEND_UPDATE_RECIPIENT = 'send/SEND_UPDATE_RECIPIENT';
 const SEND_UPDATE_ASSET_AMOUNT = 'send/SEND_UPDATE_ASSET_AMOUNT';
 const SEND_UPDATE_SELECTED = 'send/SEND_UPDATE_SELECTED';
+const SEND_UPDATE_NFT_SELECTED = 'send/SEND_UPDATE_NFT_SELECTED';
 const SEND_UPDATE_HAS_PENDING_TRANSACTION =
   'send/SEND_UPDATE_HAS_PENDING_TRANSACTION';
 
@@ -58,10 +59,8 @@ function getBalanceAmount(assets, gasPrice, selected) {
   let amount = '';
 
   if (selected.symbol === 'ETH') {
-    const ethereum = assets.filter(
-      asset => asset.symbol === 'ETH',
-    )[0];
-    const balanceAmount = ethereum.balance.amount;
+    const ethereum = assets.filter(asset => asset.symbol === 'ETH');
+    const balanceAmount = get(ethereum, '[0].balance.amount', 0);
     const txFeeAmount = gasPrice.txFee.value.amount;
     const remaining = convertStringToNumber(
       subtract(balanceAmount, txFeeAmount),
@@ -128,7 +127,7 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
   let gasPrices = getState().send.gasPrices;
   if (!Object.keys(gasPrices).length) return null;
   const _gasPriceOption = newGasPriceOption || gasPriceOption;
-  const _gasPrice = gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
+  let _gasPrice = _gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
   dispatch({ type: SEND_UPDATE_GAS_PRICE_REQUEST });
   estimateGasLimit({
     asset: selected,
@@ -141,12 +140,11 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
       const { assets } = getState().assets;
       const { nativeCurrency } = getState().settings;
       gasPrices = parseGasPricesTxFee(gasPrices, prices, gasLimit, nativeCurrency);
+      _gasPrice = gasPriceOption ? gasPrices[_gasPriceOption] : gasPrice;
 
-      const ethereum = assets.filter(
-        asset => asset.symbol === 'ETH',
-      )[0];
+      const ethereum = assets.filter(asset => asset.symbol === 'ETH');
 
-      const balanceAmount = ethereum.balance.amount;
+      const balanceAmount = get(ethereum, '[0].balance.amount', 0);
       const txFeeAmount = _gasPrice.txFee.value.amount;
 
       dispatch({
@@ -203,43 +201,38 @@ export const sendTransaction = (transactionDetails, signAndSendTransactionCb) =>
     gasLimit,
   } = transactionDetails;
   const { accountType } = getState().settings;
-  const { selected, trackingAmount } = getState().send;
+  const { selected } = getState().send;
   const txDetails = {
-    asset: asset,
+    amount,
+    asset,
     from: address,
-    to: recipient,
-    nonce: null,
-    amount: amount,
-    gasPrice: gasPrice.value.amount,
     gasLimit: gasLimit,
+    gasPrice: gasPrice.value.amount,
+    nonce: null,
+    to: recipient,
   };
   return createSignableTransaction(txDetails)
     .then(signableTransactionDetails => {
-      const symbol = get(selected, 'symbol', 'unknown');
-      const address = get(selected, 'address', '');
-      const trackingName = `${symbol}:${address}`;
       signAndSendTransactionCb({
         accountType,
-        tracking: {
-          action: 'send',
-          amount: parseFloat(trackingAmount),
-          name: trackingName,
-        },
         transaction: signableTransactionDetails,
       })
       .then((txHash) => {
-        txDetails.hash = txHash;
-
-        dispatch(transactionsAddNewTransaction(txDetails))
-          .then(success => {
-            dispatch({
-              type: SEND_TRANSACTION_SUCCESS,
-              payload: txHash,
+        if (!isEmpty(txHash)) {
+          txDetails.hash = txHash;
+          dispatch(transactionsAddNewTransaction(txDetails))
+            .then(success => {
+              dispatch({
+                type: SEND_TRANSACTION_SUCCESS,
+                payload: txHash,
+              });
+              resolve(txHash);
+            }).catch(error => {
+              reject(error);
             });
-            resolve(txHash);
-          }).catch(error => {
-            reject(error);
-          });
+        } else {
+          dispatch({ type: SEND_TRANSACTION_FAILURE });
+        }
       }).catch(error => {
         const message = parseError(error);
         dispatch(notificationShow(message, true));
@@ -351,19 +344,27 @@ export const sendUpdateNativeAmount = nativeAmount => (dispatch, getState) => {
   });
 };
 
-export const sendUpdateSelected = value => (dispatch, getState) => {
-  const state = getState();
-  const assetAmount = get(state, 'send.assetAmount', 0);
-  const assets = get(state, 'assets.assets', []);
-  const nativeCurrency = get(state, 'settings.nativeCurrency', '');
-  const prices = get(state, 'prices.prices', {});
-  const selected = assets.filter(asset => asset.symbol === value)[0] || {};
+export const sendUpdateSelected = (value) => (dispatch, getState) => {
+  if (get(value, 'isNft')) {
+    dispatch({ type: SEND_UPDATE_NFT_SELECTED, payload: {
+      selected: {
+        ...value,
+        symbol: value.asset_contract.name,
+      },
+    }});
+  } else {
+    const state = getState();
+    const assetAmount = get(state, 'send.assetAmount', 0);
+    const assets = get(state, 'assets.assets', []);
+    const nativeCurrency = get(state, 'settings.nativeCurrency', '');
+    const prices = get(state, 'prices.prices', {});
+    const selected = assets.filter(asset => asset.symbol === value)[0] || {};
 
-  dispatch({ type: SEND_UPDATE_SELECTED, payload: selected });
-  dispatch(sendUpdateGasPrice());
-
-  if (prices[nativeCurrency] && prices[nativeCurrency][selected.symbol]) {
-    dispatch(sendUpdateAssetAmount(assetAmount));
+    dispatch({ type: SEND_UPDATE_SELECTED, payload: selected });
+    //TODO this may be unnecessary: dispatch(sendUpdateGasPrice());
+    if (prices[nativeCurrency] && prices[nativeCurrency][selected.symbol]) {
+      dispatch(sendUpdateAssetAmount(assetAmount));
+    }
   }
 };
 
@@ -379,20 +380,22 @@ export const sendClearFields = () => ({ type: SEND_CLEAR_FIELDS });
 
 // -- Reducer --------------------------------------------------------------- //
 const INITIAL_STATE = {
+  address: '',
+  assetAmount: '',
+  confirm: false,
+  fetching: false,
   fetchingGasPrices: false,
+  gasLimit: ethUnits.basic_tx,
   gasPrice: {},
   gasPrices: {},
-  gasLimit: ethUnits.basic_tx,
   gasPriceOption: 'average',
-  fetching: false,
-  address: '',
-  recipient: '',
+  isSufficientBalance: false,
+  isSufficientGas: false,
   nativeAmount: '',
-  trackingAmount: '',
-  assetAmount: '',
-  txHash: '',
-  confirm: false,
+  recipient: '',
   selected: {},
+  trackingAmount: '',
+  txHash: '',
 };
 
 export default (state = INITIAL_STATE, action) => {
@@ -480,6 +483,13 @@ export default (state = INITIAL_STATE, action) => {
       };
     case SEND_UPDATE_SELECTED:
       return { ...state, selected: action.payload };
+    case SEND_UPDATE_NFT_SELECTED:
+      return {
+        ...state,
+        assetAmount: '1',
+        selected: action.payload.selected,
+        isSufficientBalance: true,
+      };
     case SEND_CLEAR_FIELDS:
       return { ...state, ...INITIAL_STATE };
     default:
