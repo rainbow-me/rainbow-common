@@ -1,5 +1,8 @@
-import { endsWith, startsWith } from 'lodash';
-import { toChecksumAddress, web3Provider } from '../handlers/web3_ethers';
+import {
+  isHexString,
+  toChecksumAddress,
+  web3Provider,
+} from '../handlers/web3_ethers';
 
 /**
  * @desc validate email
@@ -11,13 +14,17 @@ export const isValidEmail = email =>
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
   );
 
+export const isENSAddressFormat = (address) => {
+  return address.match(/.+\..+/g);
+};
+
 /**
  * @desc validate ethereum address
  * @param  {String} address or ENS
  * @return {Boolean}
  */
 export const isValidAddress = async (address) => {
-  if (endsWith(address, '.eth')) {
+  if (isENSAddressFormat(address)) {
     try {
       const resolvedAddress = await web3Provider.resolveName(address);
       return !!resolvedAddress;
@@ -25,7 +32,7 @@ export const isValidAddress = async (address) => {
       return false;
     }
   }
-  if (!startsWith(address, '0x')) return false;
+  if (!isHexString(address)) return false;
   if (!/^(0x)?[0-9a-f]{40}$/i.test(address)) return false;
   if (/^(0x)?[0-9a-f]{40}$/.test(address)
     || /^(0x)?[0-9A-F]{40}$/.test(address)) return true;
