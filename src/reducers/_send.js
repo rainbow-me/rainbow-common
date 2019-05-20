@@ -232,6 +232,7 @@ export const sendTransaction = (transactionDetails, signAndSendTransactionCb) =>
             });
         } else {
           dispatch({ type: SEND_TRANSACTION_FAILURE });
+          reject(false);
         }
       }).catch(error => {
         const message = parseError(error);
