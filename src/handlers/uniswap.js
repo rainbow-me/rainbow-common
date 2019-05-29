@@ -1,43 +1,47 @@
-import {
-  divide,
-  fromWei,
-  multiply,
-} from '../helpers/bignumber';
+import { ethers } from 'ethers';
 import { map, zipObject } from 'lodash';
-import { web3Instance } from './web3';
+import { divide, fromWei, multiply } from '../helpers/bignumber';
 import exchangeABI from '../references/uniswap-exchange-abi.json';
 import erc20ABI from '../references/erc20-abi.json';
+import { web3Provider } from './web3_ethers';
 
 export const getUniswapLiquidityInfo = async (accountAddress, exchangeContracts) => {
   const promises = map(exchangeContracts, async (exchangeAddress) => {
     try {
-      const ethReserveCall = web3Instance.eth.getBalance(exchangeAddress);
-      const exchange = new web3Instance.eth.Contract(exchangeABI, exchangeAddress);
-      const tokenAddressCall = exchange.methods.tokenAddress().call();
-      const balanceCall = exchange.methods.balanceOf(accountAddress).call();
-      const totalSupplyCall = exchange.methods.totalSupply().call();
+      const ethReserveCall = web3Provider.getBalance(exchangeAddress);
+      const exchange = new ethers.Contract(exchangeAddress, exchangeABI, web3Provider);
+      const tokenAddressCall = exchange.tokenAddress();
+      const balanceCall = exchange.balanceOf(accountAddress);
+      const totalSupplyCall = exchange.totalSupply();
 
-      const exchangeInfo = await Promise.all([ethReserveCall, tokenAddressCall, balanceCall, totalSupplyCall]);
-      const ethReserve = exchangeInfo[0];
-      const tokenAddress = exchangeInfo[1];
-      const balance = exchangeInfo[2];
-      const totalSupply = exchangeInfo[3];
+      const [
+        ethReserve,
+        tokenAddress,
+        balance,
+        totalSupply,
+      ] = await Promise.all([
+        ethReserveCall,
+        tokenAddressCall,
+        balanceCall,
+        totalSupplyCall,
+      ]);
 
-      const tokenContract = new web3Instance.eth.Contract(erc20ABI, tokenAddress);
-      const tokenReserveCall = tokenContract.methods.balanceOf(exchangeAddress).call();
-      const tokenDecimalsCall = tokenContract.methods.decimals().call();
-      const tokenInfo = await Promise.all([tokenReserveCall, tokenDecimalsCall]);
+      const tokenContract = new ethers.Contract(tokenAddress, erc20ABI, web3Provider);
+      const tokenReserveCall = tokenContract.balanceOf(exchangeAddress);
+      const tokenDecimalsCall = tokenContract.decimals();
+
+      const [reserve, decimals] = await Promise.all([tokenReserveCall, tokenDecimalsCall]);
+
       let symbol = '';
       try {
-        symbol = await tokenContract.methods.symbol().call().catch();
+        symbol = await tokenContract.symbol().catch();
       } catch (error) {
         console.log('error getting symbol', error);
       }
-      const reserve = tokenInfo[0];
-      const decimals = tokenInfo[1];
 
       const ethBalance = fromWei(divide(multiply(ethReserve, balance), totalSupply));
       const tokenBalance = fromWei(divide(multiply(reserve, balance), totalSupply), decimals);
+
       return {
         tokenAddress,
         balance,
@@ -54,6 +58,7 @@ export const getUniswapLiquidityInfo = async (accountAddress, exchangeContracts)
       return {};
     }
   });
+
   const results = await Promise.all(promises);
   return zipObject(exchangeContracts, results);
 };

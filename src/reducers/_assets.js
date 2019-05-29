@@ -109,7 +109,8 @@ const assetsClearState = () => (dispatch, getState) => {
 export const assetsRefreshState = () => dispatch => {
   const getBalances = dispatch(assetsUpdateBalances());
   const getUniqueTokens = dispatch(assetsGetUniqueTokens());
-  return Promise.all([getBalances, getUniqueTokens]);
+  const getUniswap = dispatch(uniswapUpdateState());
+  return Promise.all([getBalances, getUniswap, getUniqueTokens]);
 };
 
 const assetsUpdateBalances = () => (dispatch, getState) => new Promise((resolve, reject) => {
@@ -120,8 +121,8 @@ const assetsUpdateBalances = () => (dispatch, getState) => new Promise((resolve,
       .then(assets => {
         saveAssets(accountAddress, assets, network);
         dispatch({
-          type: ASSETS_UPDATE_BALANCES_SUCCESS,
           payload: assets,
+          type: ASSETS_UPDATE_BALANCES_SUCCESS,
         });
         dispatch(uniswapUpdateState());
         dispatch(getNativePrices()).then(() => {

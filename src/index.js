@@ -1,13 +1,9 @@
-import "@babel/polyfill";
+import '@babel/polyfill';
 import supportedNativeCurrencies from './references/native-currencies.json';
 import lang, { resources, supportedLanguages } from './languages';
 
-import {
-  withSendComponentWithData
-} from './components/SendComponentWithData';
-import {
-  withAccountAssets
-} from './hoc';
+import { withSendComponentWithData } from './components/SendComponentWithData';
+import { withAccountAssets } from './hoc';
 import {
   accountClearState,
   accountLoadState,
@@ -172,7 +168,6 @@ export {
   transactionsRefreshState,
   transactionsUpdateHasPendingTransaction,
   uniswap,
-  web3Instance,
   web3Provider,
   withAccountAssets,
   withSendComponentWithData,
