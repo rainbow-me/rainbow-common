@@ -1,13 +1,9 @@
-import "@babel/polyfill";
+import '@babel/polyfill';
 import supportedNativeCurrencies from './references/native-currencies.json';
 import lang, { resources, supportedLanguages } from './languages';
 
-import {
-  withSendComponentWithData
-} from './components/SendComponentWithData';
-import {
-  withAccountAssets
-} from './hoc';
+import { withSendComponentWithData } from './components/SendComponentWithData';
+import { withAccountAssets } from './hoc';
 import {
   accountClearState,
   accountLoadState,
@@ -35,6 +31,7 @@ import {
   transactionsRefreshState,
   transactionsUpdateHasPendingTransaction,
   transactionsAddNewTransaction,
+  uniswap,
 } from './reducers';
 import {
   isValidAddress,
@@ -167,9 +164,10 @@ export {
   toHex,
   transactionData,
   transactions,
+  transactionsAddNewTransaction,
   transactionsRefreshState,
   transactionsUpdateHasPendingTransaction,
-  transactionsAddNewTransaction,
+  uniswap,
   web3Provider,
   withAccountAssets,
   withSendComponentWithData,
