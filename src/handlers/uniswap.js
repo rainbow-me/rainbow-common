@@ -33,7 +33,7 @@ export const getUniswapLiquidityInfo = async (accountAddress, exchangeContracts)
 
       const [reserve, decimals] = await Promise.all([tokenReserveCall, tokenDecimalsCall]);
 
-      let symbol = '';
+      let symbol = contractMap[tokenAddress] || '';
       try {
         symbol = await tokenContract.symbol().catch();
       } catch (error) {
@@ -47,6 +47,7 @@ export const getUniswapLiquidityInfo = async (accountAddress, exchangeContracts)
         tokenAddress,
         balance,
         ethBalance,
+        ethReserve,
         token: {
           balance: tokenBalance,
           decimals,
