@@ -33,6 +33,15 @@ export const getUniswapLiquidityInfo = async (accountAddress, exchangeContracts)
 
       const [reserve, decimals] = await Promise.all([tokenReserveCall, tokenDecimalsCall]);
 
+      let name = get(contractMap, `[${tokenAddress}].name`, '');
+      try {
+        name = await tokenContract.name().catch();
+      } catch (error) {
+        if (!name) {
+          console.log('error getting name for token: ', tokenAddress, ' Error = ', error);
+        }
+      }
+
       let symbol = get(contractMap, `[${tokenAddress}].symbol`, '');
       try {
         symbol = await tokenContract.symbol().catch();
@@ -53,6 +62,7 @@ export const getUniswapLiquidityInfo = async (accountAddress, exchangeContracts)
         token: {
           balance: tokenBalance,
           decimals,
+          name,
           symbol,
         },
         totalSupply,
