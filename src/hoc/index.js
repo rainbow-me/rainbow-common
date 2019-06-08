@@ -1,1 +1,1 @@
-export { default as withAccountAssets } from './withAccountAssets';
+export { default as withUniqueTokens } from './withUniqueTokens';
