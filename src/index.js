@@ -6,7 +6,7 @@ import {
   withSendComponentWithData
 } from './components/SendComponentWithData';
 import {
-  withAccountAssets
+  withUniqueTokens
 } from './hoc';
 import {
   accountClearState,
@@ -171,6 +171,6 @@ export {
   transactionsUpdateHasPendingTransaction,
   transactionsAddNewTransaction,
   web3Provider,
-  withAccountAssets,
   withSendComponentWithData,
+  withUniqueTokens,
 };

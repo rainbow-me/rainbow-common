@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { compose } from 'recompact';
 import { get } from 'lodash';
 import lang from '../languages';
-import { withAccountAssets } from '../hoc';
+import { withUniqueTokens } from '../hoc';
 import {
   sendModalInit,
   sendUpdateGasPrice,
@@ -316,6 +316,6 @@ export const withSendComponentWithData = (SendComponent, options) => {
       sendToggleConfirmationView,
       notificationShow,
     }),
-    withAccountAssets,
+    withUniqueTokens,
   )(SendComponentWithData);
 };
