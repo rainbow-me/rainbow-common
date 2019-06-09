@@ -6,7 +6,7 @@ import transactions from './_transactions';
 import {
   accountClearState,
   accountLoadState,
-  assetsRefreshState,
+  uniqueTokensRefreshState,
 } from './_assets';
 import {
   settingsChangeLanguage,
@@ -36,7 +36,6 @@ export {
   accountClearState,
   accountLoadState,
   assets,
-  assetsRefreshState,
   prices,
   send,
   sendClearFields,
@@ -59,4 +58,5 @@ export {
   transactionsRefreshState,
   transactionsUpdateHasPendingTransaction,
   transactionsAddNewTransaction,
+  uniqueTokensRefreshState,
 };

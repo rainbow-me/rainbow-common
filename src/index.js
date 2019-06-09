@@ -12,7 +12,6 @@ import {
   accountClearState,
   accountLoadState,
   assets,
-  assetsRefreshState,
   prices,
   send,
   sendClearFields,
@@ -35,6 +34,7 @@ import {
   transactionsRefreshState,
   transactionsUpdateHasPendingTransaction,
   transactionsAddNewTransaction,
+  uniqueTokensRefreshState,
 } from './reducers';
 import {
   isValidAddress,
@@ -99,7 +99,6 @@ export {
   add,
   apiGetGasPrices,
   assets,
-  assetsRefreshState,
   calcTxFee,
   capitalize,
   commonStorage,
@@ -174,6 +173,7 @@ export {
   transactionsRefreshState,
   transactionsUpdateHasPendingTransaction,
   transactionsAddNewTransaction,
+  uniqueTokensRefreshState,
   web3Provider,
   withSendComponentWithData,
   withUniqueTokens,
