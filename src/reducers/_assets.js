@@ -5,7 +5,6 @@ import {
   removeUniqueTokens,
   removeWalletConnect,
 } from '../handlers/commonStorage';
-import { transactionsClearState, transactionsLoadState } from './_transactions';
 import {
   getNativePrices,
   pricesClearState,
@@ -35,14 +34,12 @@ let getUniqueTokensInterval = null;
 export const accountClearState = () => dispatch => {
   dispatch(pricesClearState());
   dispatch(assetsClearState());
-  dispatch(transactionsClearState());
   removeWalletConnect();
 };
 
 export const accountLoadState = () => dispatch => {
   dispatch(uniqueTokensLoadState());
   dispatch(pricesLoadState());
-  dispatch(transactionsLoadState());
 };
 
 const uniqueTokensLoadState = () => (dispatch, getState) => {
