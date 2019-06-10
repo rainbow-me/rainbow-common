@@ -392,15 +392,12 @@ export const convertAssetAmountFromNativeValue = (
 export const convertAssetAmountToNativeAmount = (
   value,
   asset,
-  nativePrices,
+  priceUnit,
   nativeCurrency,
 ) => {
   const _value = convertAmountFromBigNumber(`${value}`);
-  const assetPriceUnit = convertAmountFromBigNumber(
-    get(nativePrices, `[${nativeCurrency}][${asset.symbol}].price.amount`, 0),
-  );
   const assetNativePrice = BigNumber(_value)
-    .times(BigNumber(assetPriceUnit))
+    .times(BigNumber(priceUnit))
     .toString();
   return convertAmountToBigNumber(assetNativePrice);
 };

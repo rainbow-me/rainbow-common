@@ -1,4 +1,4 @@
-import { get, isEmpty } from 'lodash';
+import { find, get, isEmpty } from 'lodash';
 import { apiGetGasPrices } from '../handlers/api';
 import lang from '../languages';
 import ethUnits from '../references/ethereum-units.json';
@@ -14,7 +14,6 @@ import {
   subtract,
 } from '../helpers/bignumber';
 import {
-  parseError,
   parseGasPrices,
   parseGasPricesTxFee,
 } from '../handlers/parsers';
@@ -22,7 +21,6 @@ import {
   createSignableTransaction,
   estimateGasLimit,
 } from '../handlers/web3_ethers';
-import { notificationShow } from './_notification';
 import {
   transactionsAddNewTransaction,
   transactionsUpdateHasPendingTransaction,
@@ -78,10 +76,11 @@ function getBalanceAmount(assets, gasPrice, selected) {
 export const sendModalInit = (options = {}) => (dispatch, getState) => {
   const { accountAddress, nativeCurrency } = getState().settings;
   const { assets } = getState().assets;
-  const { prices } = getState().prices;
   const { gasLimit } = getState().send;
+  const ethAsset = find(assets, asset => asset.address === 'eth');
+  const ethPriceUnit = get(ethAsset, 'price.value', 0);
 
-  const fallbackGasPrices = parseGasPrices(null, prices, gasLimit, nativeCurrency, options.gasFormat === 'short');
+  const fallbackGasPrices = parseGasPrices(null, ethPriceUnit, gasLimit, nativeCurrency, options.gasFormat === 'short');
   const selected = assets.filter(asset => asset.symbol === options.defaultAsset)[0] || {};
 
   dispatch({
@@ -95,7 +94,7 @@ export const sendModalInit = (options = {}) => (dispatch, getState) => {
 
   apiGetGasPrices()
     .then(({ data }) => {
-      const gasPrices = parseGasPrices(data, prices, gasLimit, nativeCurrency, options.gasFormat === 'short');
+      const gasPrices = parseGasPrices(data, ethPriceUnit, gasLimit, nativeCurrency, options.gasFormat === 'short');
       dispatch({
         type: SEND_GET_GAS_PRICES_SUCCESS,
         payload: gasPrices,
@@ -159,25 +158,12 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
       });
     })
     .catch(error => {
-      const message = parseError(error);
       if (assetAmount) {
         const requestedAmount = convertAmountToBigNumber(`${assetAmount}`);
         const availableBalance = get(selected, 'balance.amount');
         if (greaterThan(requestedAmount, availableBalance)) {
-          dispatch(
-            notificationShow(
-              lang.t('notification.error.insufficient_balance'),
-              true,
-            ),
-          );
+          // TODO
         }
-      } else {
-        dispatch(
-          notificationShow(
-            message || lang.t('notification.error.failed_get_tx_fee'),
-            true,
-          ),
-        );
       }
       dispatch({
         type: SEND_UPDATE_GAS_PRICE_FAILURE,
@@ -235,15 +221,11 @@ export const sendTransaction = (transactionDetails, signAndSendTransactionCb) =>
           reject(false);
         }
       }).catch(error => {
-        const message = parseError(error);
-        dispatch(notificationShow(message, true));
         dispatch({ type: SEND_TRANSACTION_FAILURE });
         reject(error);
       });
     })
     .catch(error => {
-      const message = parseError(error);
-      dispatch(notificationShow(message, true));
       dispatch({ type: SEND_TRANSACTION_FAILURE });
       reject(error);
     });

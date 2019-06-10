@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import { apiGetAccountTransactions } from '../handlers/api';
 import { parseNewTransaction } from '../handlers/parsers';
 import {
   getLocalTransactions,
