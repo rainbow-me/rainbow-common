@@ -67,6 +67,7 @@ export const getUniswapLiquidityInfo = async (accountAddress, exchangeContracts)
           symbol,
         },
         totalSupply,
+        uniqueId: tokenAddress,
       };
     } catch (error) {
       console.log('error getting uniswap info', error);
