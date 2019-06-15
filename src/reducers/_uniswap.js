@@ -26,6 +26,7 @@ export const uniswapLoadState = () => (dispatch, getState) => {
   dispatch({ type: UNISWAP_LOAD_REQUEST });
   getUniswap(accountAddress, network)
     .then(uniswap => {
+      console.log('LOADED UNISWAP', uniswap);
       dispatch({
         type: UNISWAP_LOAD_SUCCESS,
         payload: uniswap,

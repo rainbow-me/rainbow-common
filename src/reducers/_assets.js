@@ -110,7 +110,7 @@ export const assetsRefreshState = () => dispatch => {
   const getBalances = dispatch(assetsUpdateBalances());
   const getUniqueTokens = dispatch(assetsGetUniqueTokens());
   const getUniswap = dispatch(uniswapUpdateState());
-  return Promise.all([getBalances, getUniswap, getUniqueTokens]);
+  return Promise.all([getUniswap, getBalances, getUniqueTokens]);
 };
 
 const assetsUpdateBalances = () => (dispatch, getState) => new Promise((resolve, reject) => {
