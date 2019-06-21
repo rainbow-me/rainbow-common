@@ -232,6 +232,7 @@ export const sendTransaction = (transactionDetails, signAndSendTransactionCb) =>
             });
         } else {
           dispatch({ type: SEND_TRANSACTION_FAILURE });
+          reject(false);
         }
       }).catch(error => {
         const message = parseError(error);
@@ -346,6 +347,7 @@ export const sendUpdateNativeAmount = nativeAmount => (dispatch, getState) => {
 
 export const sendUpdateSelected = (value) => (dispatch, getState) => {
   if (get(value, 'isNft')) {
+    dispatch(sendUpdateGasPrice());
     dispatch({ type: SEND_UPDATE_NFT_SELECTED, payload: {
       selected: {
         ...value,
@@ -361,7 +363,7 @@ export const sendUpdateSelected = (value) => (dispatch, getState) => {
     const selected = assets.filter(asset => asset.symbol === value)[0] || {};
 
     dispatch({ type: SEND_UPDATE_SELECTED, payload: selected });
-    //TODO this may be unnecessary: dispatch(sendUpdateGasPrice());
+    dispatch(sendUpdateGasPrice());
     if (prices[nativeCurrency] && prices[nativeCurrency][selected.symbol]) {
       dispatch(sendUpdateAssetAmount(assetAmount));
     }
@@ -373,6 +375,7 @@ export const sendMaxBalance = () => (dispatch, getState) => {
   const { assets } = getState().assets;
   const balanceAmount = getBalanceAmount(assets, gasPrice, selected);
 
+  dispatch(sendUpdateGasPrice());
   dispatch(sendUpdateAssetAmount(balanceAmount));
 };
 

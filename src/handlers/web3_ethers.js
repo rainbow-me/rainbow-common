@@ -66,7 +66,7 @@ export const toHex = value => ethers.utils.hexlify(ethers.utils.bigNumberify(val
  * @param  {String} address
  * @return {Number} gas limit
  */
-export const estimateGas = async (estimateGasData) => { 
+export const estimateGas = async (estimateGasData) => {
   const gasLimit = await web3Provider.estimateGas(estimateGasData);
   return gasLimit.toNumber();
 };
@@ -75,7 +75,7 @@ export const estimateGas = async (estimateGasData) => {
  * @desc get gas price
  * @return {String} gas price
  */
-export const getGasPrice = async () => { 
+export const getGasPrice = async () => {
   const gasPrice = await web3Provider.getGasPrice();
   return gasPrice.toString();
 };
